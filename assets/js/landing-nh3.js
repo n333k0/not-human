@@ -95,7 +95,9 @@ if (focusEl && !reduced) {
 function onFocus() {
   if (!fws.length) return;
   const r = focusSec.getBoundingClientRect(), vh = innerHeight;
-  const p = wide() ? clamp(-r.top / Math.max(1, r.height - vh)) : clamp((vh * .8 - r.top) / Math.max(1, r.height));
+  // phones (v10): the reading starts when the sentence has come a third of the way up the screen, and ends before it leaves the top
+  const er = window.NH_READ && !wide() ? focusEl.getBoundingClientRect() : null;
+  const p = wide() ? clamp(-r.top / Math.max(1, r.height - vh)) : er ? clamp((vh * window.NH_READ - er.top) / Math.max(1, er.height + vh * (window.NH_READ - .3))) : clamp((vh * .8 - r.top) / Math.max(1, r.height));
   const idx = Math.min(fws.length - 1, Math.floor(p * fws.length));
   if (idx === fLast) return; fLast = idx;
   const w = fws[idx];
@@ -582,7 +584,8 @@ const hero = document.querySelector('.hero'), call = document.querySelector('.ca
 const stages = $$('.stage'), STAGE_AT = [[.20, .36], [.42, .58], [.64, .80]];
 const flanks = $$('.flank');
 let heroT = 0, callT = 0, intro = reduced ? 1 : 0, which = 'hero';
-ScrollTrigger.create({ trigger: hero, start: 'top top', end: 'bottom bottom', onUpdate: s => { heroT = s.progress; } });
+const heroMap = p => { const K = window.NH_TAIL; if (!K || innerWidth >= 900) return p; const D0 = .14, c = 1 - (D0 - K), pe = .86 / c; return p <= pe ? p * c : .86 + (p - pe) / (1 - pe) * D0; };   // phones: the dead tail of the hero (t .86 to 1) is cut to K
+ScrollTrigger.create({ trigger: hero, start: 'top top', end: 'bottom bottom', onUpdate: s => { heroT = heroMap(s.progress); } });
 ScrollTrigger.create({ trigger: call, start: 'top bottom', end: 'bottom bottom', onUpdate: s => { callT = s.progress; } });
 gsap.to({ v: 0 }, { v: 1, duration: reduced ? 0 : 1.6, ease: 'expo.out', delay: reduced ? 0 : 1.7, onUpdate() { intro = this.targets()[0].v; } });
 setTimeout(() => flanks.forEach(f => scramble(f, 900)), reduced ? 0 : 1900);

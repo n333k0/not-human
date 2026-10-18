@@ -460,7 +460,8 @@ const ppu = () => { const a = toWorld(innerWidth / 2, innerHeight / 2), b = toWo
 const hero = document.querySelector('.hero'), stages = $$('.stage'), STAGE_AT = [[.20, .36], [.42, .58], [.64, .80]];
 const targets = $$('.targets i');
 let heroT = 0, intro = reduced ? 1 : 0, shiftX = 0;
-ScrollTrigger.create({ trigger: hero, start: 'top top', end: 'bottom bottom', onUpdate: s => { heroT = s.progress; } });
+const heroMap = p => { const K = window.NH_TAIL; if (!K || innerWidth >= 900) return p; const D0 = .14, c = 1 - (D0 - K), pe = .86 / c; return p <= pe ? p * c : .86 + (p - pe) / (1 - pe) * D0; };   // phones: the dead tail of the hero (t .86 to 1) is cut to K
+ScrollTrigger.create({ trigger: hero, start: 'top top', end: 'bottom bottom', onUpdate: s => { heroT = heroMap(s.progress); } });
 gsap.to({ v: 0 }, { v: 1, duration: reduced ? 0 : 1.6, ease: 'expo.out', delay: reduced ? 0 : 1.7, onUpdate() { intro = this.targets()[0].v; } });
 // v10 opening (owner, 2026-10-18): the page starts on one big, thick-walled sphere, lens-sized like the About one; over the first
 // OPEN of the scroll it settles to the old start size, then the letter story runs, a touch quicker, inside the same hero length
@@ -486,7 +487,7 @@ function heroPose(o, t) {
   const flat = Math.max(seg(t, .29, .32) * (1 - seg(t, .405, .43)), seg(t, .53, .56) * (1 - seg(t, .63, .66)));
   // phones: through the first two lines (the N, then the H) the object sits a bit above the middle, clear of the text at the bottom;
   // it eases back before the third line (owner, 2026-10-18)
-  if (innerWidth < 900) o.y = .12 * 2 * camZ * (innerWidth / innerHeight < 1 ? 1.6 : 1) * Math.tan(THREE.MathUtils.degToRad(19)) * io(seg(t, .12, .22)) * (1 - io(seg(t, .56, .66)));
+  if (innerWidth < 900) o.y = .07 * 2 * camZ * (innerWidth / innerHeight < 1 ? 1.6 : 1) * Math.tan(THREE.MathUtils.degToRad(19)) * io(seg(t, .12, .22)) * (1 - io(seg(t, .56, .66)));
   return { camZ, flat: io(flat), targetsOn: t > .12 && t < .79 };
 }
 // one ball at a time: S scales the whole piece, Z each node
