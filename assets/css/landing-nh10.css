@@ -1,0 +1,18 @@
+/* Not Human landing v10 (2026-10-18): tool marks on each agent-system card, replacing "Case study coming soon".
+   Marks: Simple Icons (CC0) in assets/logos/, shown as examples of common stacks, not partnerships. */
+html.v10 .sys .sys-tools { display: grid; gap: 10px; padding-top: 4px; }
+html.v10 .sys .sys-tools .label { font: 400 10px/1.2 var(--mono); letter-spacing: .08em; text-transform: uppercase; color: var(--ink-2); }
+html.v10 .sys .sys-tools ul { list-style: none; display: flex; flex-wrap: wrap; gap: 6px; padding: 0; margin: 0; }
+html.v10 .sys .sys-tools li { position: relative; display: grid; place-items: center; width: 38px; height: 38px; padding: 0; border: 0; border-radius: 10px; background: rgba(255, 255, 255, .045); box-shadow: inset 0 0 0 1px rgba(255, 255, 255, .07); transition: background .4s ease, transform .5s var(--ease); }
+html.v10 .sys .sys-tools li::before, html.v10 .sys .sys-tools li::after { display: none; content: none; }
+html.v10 .sys .sys-tools img { width: 18px; height: 18px; filter: brightness(0) invert(1); opacity: .72; transition: opacity .4s ease; }
+html.v10 .sys .sys-tools .wm b { font: 600 8.5px/1 var(--body); letter-spacing: -.02em; color: #fff; opacity: .72; }
+html.v10 .sys .sys-tools .sr { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); }
+html.v10 .sys .sys-tools li:hover { background: rgba(255, 255, 255, .1); transform: translateY(-2px); }
+html.v10 .sys .sys-tools li:hover img, html.v10 .sys .sys-tools li:hover .wm b { opacity: 1; }
+/* Field-note cover (tools/build-covers.py). */
+html.v10 .nt-img.nt-cover { background: #0B0B0E; }
+html.v10 .nt-img.nt-cover img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; display: block; }
+/* The v10 headline is twice as long as v9's: a step smaller and a little wider so it holds five lines beside the mark. */
+html.v10 .stage.s1 { max-width: min(700px, calc(100% - 32px)); }
+html.v10 .stage.s1 .big { font-size: clamp(32px, 3.7vw, 60px); line-height: 1.04; }
