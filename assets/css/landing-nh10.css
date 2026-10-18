@@ -27,3 +27,9 @@ html.v10 .lightfield { display: none; }
 @media (max-width: 899px) {
   html.v10 .stage { left: var(--gut); right: auto; top: auto; bottom: calc(env(safe-area-inset-bottom, 0px) + 30px); max-width: calc(100% - var(--gut) * 2); }
 }
+
+/* iOS: the toolbars slide away as you scroll, so the visible height changes. The pinned hero and call follow it (dvh) instead of the
+   small viewport, otherwise the lines stay where the toolbars were and leave a gap under them. */
+@supports (height: 100dvh) {
+  html.v10 .hero-pin, html.v10 .call-pin { height: 100dvh; }
+}
