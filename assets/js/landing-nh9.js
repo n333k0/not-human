@@ -484,6 +484,9 @@ function heroPose(o, t) {
   const back = io(seg(t, .79, .86));
   const camZ = lerp(lerp(5.9, 3.0, io(seg(t, .60, .78))), 6.6, back);
   const flat = Math.max(seg(t, .29, .32) * (1 - seg(t, .405, .43)), seg(t, .53, .56) * (1 - seg(t, .63, .66)));
+  // phones: through the first two lines (the N, then the H) the object sits a bit above the middle, clear of the text at the bottom;
+  // it eases back before the third line (owner, 2026-10-18)
+  if (innerWidth < 900) o.y = .12 * 2 * camZ * (innerWidth / innerHeight < 1 ? 1.6 : 1) * Math.tan(THREE.MathUtils.degToRad(19)) * io(seg(t, .12, .22)) * (1 - io(seg(t, .56, .66)));
   return { camZ, flat: io(flat), targetsOn: t > .12 && t < .79 };
 }
 // one ball at a time: S scales the whole piece, Z each node
