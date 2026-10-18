@@ -1,0 +1,83 @@
+/* Not Human landing v5: a white, metallic, holographic accent in place of the red. On top of landing-nh3/4.css.
+   The accent lives where the red lived: the hero and closing grounds, the cards, the glows, the small marks.
+   Ink stays near-black for type; the holographic sheen is kept to grounds, cards and the glass marks. */
+.v5 {
+  --cream: #F4F3F0; --ink: #16151C; --ink-2: #5D5A68; --line: rgba(22, 21, 28, .13);
+  --holo-ink: linear-gradient(100deg, #6F63F2 0%, #3FAED6 38%, #E56FC2 72%, #8C7CF7 100%);
+  --holo-ground:
+    radial-gradient(60% 55% at 12% 8%, #FBE3F3 0%, rgba(251, 227, 243, 0) 62%),
+    radial-gradient(55% 60% at 88% 16%, #D8EAFF 0%, rgba(216, 234, 255, 0) 62%),
+    radial-gradient(65% 70% at 72% 96%, #DEFBEE 0%, rgba(222, 251, 238, 0) 62%),
+    radial-gradient(60% 60% at 22% 92%, #E6DEFC 0%, rgba(230, 222, 252, 0) 62%),
+    linear-gradient(150deg, #F8F8FB 0%, #E7E9F1 48%, #F3F1F8 100%);
+  --holo-card: radial-gradient(130% 110% at 100% 100%, #D9E2FF 0%, #ABA6DA 22%, #5C5A7A 50%, #24232F 78%, #0F0F15 100%);
+  --holo-card-hot: radial-gradient(140% 120% at 100% 100%, #FFFFFF 0%, #DFF4FF 20%, #E9D8FF 42%, #FFD4EE 64%, #C9C2F2 84%, #A6A1D2 100%);
+}
+.v5 body { background: var(--cream); }
+
+/* grounds: pearl with soft holographic light, and a slow sheen drifting across */
+.v5 .ground { background: var(--holo-ground); }
+.v5 .ground::after { opacity: .1; }
+.v5 .ground::before { content: ""; position: absolute; inset: -20%; mix-blend-mode: soft-light; opacity: .7;
+  background: conic-gradient(from 120deg at 50% 50%, #FFC9EC, #CFC8FF, #BFEFFF, #D4FFEA, #FFF2C9, #FFC9EC);
+  filter: blur(60px); animation: holo-drift 28s linear infinite; }
+@keyframes holo-drift { to { transform: rotate(360deg); } }
+@media (prefers-reduced-motion: reduce) { .v5 .ground::before { animation: none; } }
+
+/* type on the light grounds */
+.v5 .hero, .v5 .call { color: var(--ink); }
+.v5 .big, .v5 .call .big { color: var(--ink); text-shadow: none; }
+.v5 .stage .eyebrow, .v5 .scroll-cue { color: var(--ink-2); }
+.v5 .scroll-cue i { background: rgba(22, 21, 28, .18); }
+.v5 .scroll-cue i::after { background: var(--ink); }
+.v5 .flank { color: var(--ink); }
+.v5 .targets i { border-color: rgba(22, 21, 28, .55);
+  background: linear-gradient(#16151C, #16151C) 0 0 / 5px 5px no-repeat, linear-gradient(#16151C, #16151C) 100% 0 / 5px 5px no-repeat,
+    linear-gradient(#16151C, #16151C) 0 100% / 5px 5px no-repeat, linear-gradient(#16151C, #16151C) 100% 100% / 5px 5px no-repeat; }
+.v5 .targets i::after { border-color: #16151C; }
+.v5 .targets i.x { background: linear-gradient(#16151C, #16151C) center / 1px 100% no-repeat, linear-gradient(#16151C, #16151C) center / 100% 1px no-repeat; }
+.v5 .field-dot { background: var(--ink); }
+.v5 .call4-hint { color: var(--ink-2); }
+.v5 .foot { color: var(--ink-2); border-top-color: var(--line); }
+.v5 .foot-mark { color: var(--ink); }
+
+/* buttons: never bold; ink on the light grounds */
+.v5 .cta, .v5 .pill-cta, .v5 .card-btn, .v5 .btn, .v5 .talk { font-weight: 400; }
+.v5 .cta, .v5 .site-header .pill-cta { background: var(--ink); color: #F7F7FA; }
+.v5 .site-header[data-scrolled][data-theme="light"] .nbar { background-color: rgba(248, 248, 251, .72); }
+.v5 .site-header[data-scrolled] .nbar { color: var(--ink); }
+
+/* the cards: dark glass at rest, the holographic pearl under the pointer */
+.v5 .tone-dark .card-in, .v5 .tone-bright .card-in, .v5 .tone-cta .card-in { background: var(--holo-card); }
+.v5 .card-in::before { background: var(--holo-card-hot); }
+.v5 .card.hot .card-t, .v5 .card.hot .card-b { color: var(--ink); text-shadow: none; transition: color .5s ease; }
+.v5 .card.hot .card-btn { border-color: rgba(22, 21, 28, .5); color: var(--ink); }
+.v5 .card.hot .card-btn.solid { background: var(--ink); color: #F7F7FA; }
+.v5 .card-art { stroke: rgba(230, 228, 255, .16); }
+.v5 .card.hot .card-art { stroke: rgba(22, 21, 28, .14); }
+
+/* accents that were red */
+.v5 .glow { background: radial-gradient(circle, rgba(207, 200, 255, .75) 0%, rgba(191, 239, 255, .35) 40%, rgba(255, 201, 236, 0) 70%); }
+.v5 .about-sig, .v5 .gn { background: var(--holo-ink); -webkit-background-clip: text; background-clip: text; color: transparent; }
+.v5 .more, .v5 .go, .v5 .biglist small, .v5 .faq summary::after { color: #6F63F2; }
+.v5 .focus-box i { border-color: #6F63F2; }
+.v5 .cap-img, .v5 .cs-img.tone-dark, .v5 .cs-img.tone-bright, .v5 .cs-img.tone-cta { background: var(--holo-card-hot); }
+.v5 .cs-tag { color: var(--ink); background: rgba(255, 255, 255, .45); }
+.v5 .sys li::before { background: var(--holo-ink); }
+
+/* owner's type notes */
+.v5 .about .lede { font-size: clamp(31px, 4.15vw, 68px); }                 /* 15% smaller than v4 */
+.v5 .mark-x { font-size: clamp(50px, 4.7vw, 72px); letter-spacing: -.04em; }  /* section titles, 80% larger */
+.v5 .gn { font-weight: 100; }                                                 /* the .01 .02 .03 in thin */
+.v5 .call .big.call-lines { font-size: clamp(30px, 3.6vw, 58px); }
+.v5 .call-lines .ln { white-space: nowrap; }
+
+/* the Hairline lattice beside the integration copy */
+.integ5 { display: grid; gap: 32px; margin-top: 28px; align-items: center; }
+@media (min-width: 900px) { .integ5 { grid-template-columns: minmax(0, 5fr) minmax(0, 4fr) minmax(0, 3fr); gap: 40px; } }
+.lattice-slot { max-width: 620px; aspect-ratio: 400 / 320;
+  --hairline-plate: #F4F3F0; --hairline-hi: #16151C; --hairline-edge: #4E4B59; --hairline-mid: #8E8B98; --hairline-lo: #C9C6D1; --hairline-stroke: 1.1; }
+.lattice-slot .nh-read { color: var(--ink-2); }
+.lattice-slot { position: relative; width: 100%; }
+.lattice-slot [data-hairline] { width: 100%; }
+.lattice-slot .nh-read { position: absolute; left: 4px; bottom: 2px; font: 400 11px/1 var(--mono); letter-spacing: .08em; text-transform: uppercase; }

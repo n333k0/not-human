@@ -1,0 +1,29 @@
+/* Not Human landing v4: the closing section, "one to many". On top of landing-nh3.css. */
+.call4 { height: 260vh; }
+.call-field { position: absolute; inset: 0; width: 100%; height: 100%; display: block; }
+.field-dot { position: absolute; left: 0; top: 0; width: 14px; height: 14px; margin: -7px 0 0 -7px; border-radius: 50%; background: #FFF4EC; pointer-events: none; opacity: 0; transition: opacity .3s ease; z-index: 3; }
+.call4.pointer .field-dot { opacity: 1; }
+@media (hover: none) { .field-dot { display: none; } }
+.call4-in { position: relative; z-index: 2; display: grid; gap: 22px; justify-items: start; padding-bottom: 6vh; pointer-events: none; }
+.call4-in a { pointer-events: auto; }
+
+
+.call4-hint { font: 400 11px/1.4 var(--mono); letter-spacing: .08em; text-transform: uppercase; color: rgba(255, 244, 236, .75); }
+.call4 .foot { position: relative; z-index: 2; }
+
+/* ---------------------------------------------------------------- v4 owner notes (2026-10-17) */
+/* the closing field fills the screen; the words and the call sit in the middle, in the gap between the rows */
+.call4 .call-pin { justify-content: center; }
+.call4-in { position: absolute; z-index: 2; left: 0; right: 0; top: 50%; transform: translateY(-50%); justify-items: center; text-align: center; gap: 18px; padding: 0 16px; }
+.call4 .big.call-lines { font-size: clamp(32px, 4vw, 64px); }
+.call4 .foot { position: absolute; left: 0; right: 0; bottom: 0; }
+/* about: half as large again */
+.v4 .about .lede { font-size: clamp(36px, 4.9vw, 80px); max-width: 30ch; line-height: 1.04; }
+/* buttons inside the cards */
+.card-btn { position: relative; z-index: 2; justify-self: start; display: inline-flex; align-items: center; gap: 10px; margin-top: 10px; padding: 11px 16px; border-radius: 999px;
+  border: 1px solid rgba(255, 244, 236, .55); color: #FFF4EC; text-decoration: none; font: 700 13.5px/1 var(--body); transition: background-color .4s ease, color .4s ease; }
+.card-btn:hover, .card-btn.solid { background: #FFF4EC; color: var(--ink); border-color: #FFF4EC; }
+/* your process: coloured like the others */
+.v4 .tone-cta .card-in { background: radial-gradient(130% 110% at 100% 100%, #F49A6A 0%, #E8503A 30%, #B5251A 58%, #5E0C08 82%, #1A0403 100%); }
+/* the How piece lives on a full-screen layer, so it can drop in from the top of the page */
+@media (min-width: 900px) { .v4.js .how-gl { position: fixed; inset: 0; width: 100%; height: 100%; z-index: 6; } }

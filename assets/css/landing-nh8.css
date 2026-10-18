@@ -1,0 +1,44 @@
+/* Not Human landing v8: the room and the glass are two fixed canvases (landing-nh8.js). The room sits under the page;
+   the glass sits over it by default, as the reference cube sits over its text (the panel's Layer moves it under). */
+.bg8, .gl8 { display: none; }
+html.v8 body { background: #09090B; }
+html.v8 .ground, html.v8 .leak, html.v8 .orb, html.v8 .flare { display: none !important; }
+html.v8 .bg8 { display: block; position: fixed; inset: 0; width: 100%; height: 100%; z-index: 0; pointer-events: none; }
+html.v8 .gl8 { display: block; position: fixed; inset: 0; width: 100%; height: 100%; z-index: 3; pointer-events: none; }
+html.v8[data-glass="behind"] .gl8 { z-index: 1; }
+html.v8 .grain { z-index: 4; opacity: var(--grain, .045); }
+/* the slot holds the square; the canvas draws it, the slot only measures */
+html.v8 .mark-slot { cursor: crosshair; }
+
+/* ---------------------------------------------------------------- How it works: the shape lives behind the cards.
+   The first card is centred when the block arrives; each one holds there, then the next slides in (landing-nh8.js
+   sets --tx8). The cards are frosted, so the glass reads through them. */
+html.v8 .how-mark { display: none; }
+@media (min-width: 900px) {
+  html.v8.js .card { width: var(--cw8); }
+  html.v8 { --cw8: min(30vw, 460px); }
+  html.v8.js .cards-track { padding: 0 calc(50vw - var(--cw8) / 2); gap: 2.4vw; transform: translate3d(var(--tx8, 0px), -50%, 0); }
+}
+html.v8 .tone-dark .card-in, html.v8 .tone-bright .card-in, html.v8 .tone-cta .card-in {
+  background: rgba(12, 12, 18, .34); box-shadow: inset 0 0 0 1px rgba(255, 255, 255, .1);
+  -webkit-backdrop-filter: blur(16px) saturate(1.2); backdrop-filter: blur(16px) saturate(1.2); }
+html.v8 .card.hot .card-in { box-shadow: inset 0 0 0 1px rgba(200, 190, 255, .32); }
+
+/* ---------------------------------------------------------------- agent systems: square, hairline, quiet (as the How cards) */
+html.v8 .sys { border-radius: 0; background: rgba(12, 12, 18, .3); box-shadow: inset 0 0 0 1px rgba(255, 255, 255, .1); padding: clamp(22px, 2.4vw, 34px); gap: 18px; overflow: visible;
+  -webkit-backdrop-filter: blur(10px); backdrop-filter: blur(10px); }
+html.v8 .sys::before { display: none; }
+html.v8 .sys .h3 { font-weight: 300; letter-spacing: -.02em; }
+html.v8 .sys li { padding: 11px 0 11px 0; border-top: 1px solid rgba(255, 255, 255, .08); }
+html.v8 .sys li::before { display: none; }
+html.v8 .sys li::after { content: ""; position: absolute; right: 0; top: 50%; width: 4px; height: 4px; margin-top: -2px; border-radius: 50%; background: rgba(255, 255, 255, .28); }
+html.v8 .perm { border-radius: 0; background: none; padding: 14px 0 0; border-top: 1px solid rgba(255, 255, 255, .14); gap: 8px 18px; }
+html.v8 .perm dd.hold { color: #C8BEFF; }
+html.v8 .sys-k { padding-top: 14px; border-top: 1px dashed rgba(255, 255, 255, .1); }
+
+/* ---------------------------------------------------------------- type: room for descenders under tight line-heights */
+html.v8 .mark-x, html.v8 .rule-row h2, html.v8 .h3, html.v8 .card-t, html.v8 .cs-t, html.v8 .nt-t { padding-bottom: .12em; }
+html.v8 .rule-row { overflow: visible; }
+
+/* the tuning panel steps aside while the phone menu is open */
+html:has(.site-header[data-menu]) .nh-panel { display: none; }

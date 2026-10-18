@@ -1,0 +1,54 @@
+/* Not Human landing v9: on top of v8 (landing-nh8.css). */
+
+/* the tuning panel: small type, so long option names fit their buttons */
+html.v9 .nh-panel.min { width: auto; }
+html.v9 .nh-panel:not(.min) { width: min(300px, calc(100vw - 32px)); }
+html.v9 .nh-panel { font: 400 9.5px/1.25 var(--mono); letter-spacing: .01em; }
+html.v9 .nh-panel header { padding: 10px 12px; font-size: 10px; }
+html.v9 .nh-panel .body { padding: 0 12px 12px; gap: 7px; }
+html.v9 .nh-panel h4 { font-size: 9px; margin-top: 6px; }
+html.v9 .nh-panel .presets { grid-template-columns: repeat(auto-fill, minmax(62px, 1fr)); gap: 4px; }
+html.v9 .nh-panel button { font-size: 9px; letter-spacing: .02em; text-transform: lowercase; padding: 5px 3px; border-radius: 6px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+html.v9 .nh-panel label { gap: 2px 8px; font-size: 9.5px; }
+html.v9 .nh-panel input[type=range] { height: 10px; }
+html.v9 .nh-panel .row button { text-transform: uppercase; }
+
+/* How cards: under the pointer a card barely turns and a pane of light slides across it, as glass would catch it */
+html.v9 .card-in { transform: rotateY(calc(var(--ry, 0deg) * .3)) rotateX(calc(var(--rx, 0deg) * .3)); transition: transform 1.1s var(--ease), box-shadow .8s ease; }
+html.v9 .card-in::before { background:
+  linear-gradient(115deg, rgba(255, 255, 255, 0) calc(var(--gx, 50%) - 22%), rgba(255, 255, 255, .07) var(--gx, 50%), rgba(255, 255, 255, 0) calc(var(--gx, 50%) + 22%)),
+  radial-gradient(70% 60% at var(--gx, 50%) var(--gy, 50%), rgba(200, 195, 255, .07), rgba(0, 0, 0, 0) 70%); transition: opacity 1s ease; }
+html.v9 .card.hot .card-in { box-shadow: inset 0 0 0 1px rgba(255, 255, 255, .18); }
+
+/* Where agents work: no picture on hover, for now */
+html.v9 .cap-img { display: none !important; }
+
+/* the hero: the line alone says scroll */
+html.v9 .scroll-cue span { display: none; }
+
+/* Fully integrated: the square on the left; the text and the tools' marks on the right; the four rules underneath */
+html.v9 .integ9-in { display: grid; gap: clamp(28px, 4vw, 64px); margin-top: clamp(28px, 3vw, 44px); align-items: center; }
+@media (min-width: 900px) { html.v9 .integ9-in { grid-template-columns: minmax(0, 5fr) minmax(0, 6fr); } }
+html.v9 .integ9 .mark-slot { max-width: none; aspect-ratio: 1 / .9; }
+html.v9 .integ9-side { display: grid; gap: 18px; align-content: center; }
+html.v9 .integ9-side .mid { max-width: 34ch; margin-bottom: 14px; }
+html.v9 .logos { list-style: none; display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); border-top: 1px solid rgba(255, 255, 255, .1); border-left: 1px solid rgba(255, 255, 255, .1); }
+@media (min-width: 900px) { html.v9 .logos { grid-template-columns: repeat(4, minmax(0, 1fr)); } }
+html.v9 .logos li { position: relative; display: grid; place-items: center; align-content: center; gap: 12px; aspect-ratio: 1 / .78; padding: 12px 8px;
+  border-right: 1px solid rgba(255, 255, 255, .1); border-bottom: 1px solid rgba(255, 255, 255, .1); transition: background .6s ease; }
+html.v9 .logos img { width: clamp(22px, 2vw, 30px); height: auto; filter: brightness(0) invert(1); opacity: .78; transition: opacity .5s ease, transform .6s var(--ease); }
+html.v9 .logos .wm b { font: 600 clamp(15px, 1.25vw, 19px)/1 var(--body); letter-spacing: -.03em; color: #fff; opacity: .78; height: clamp(22px, 2vw, 30px); display: grid; place-items: center; }
+html.v9 .logos span { font: 400 9.5px/1.2 var(--mono); letter-spacing: .08em; text-transform: uppercase; color: var(--ink-2); text-align: center; }
+html.v9 .logos li:hover { background: rgba(255, 255, 255, .035); }
+html.v9 .logos li:hover img, html.v9 .logos li:hover .wm b { opacity: 1; transform: translateY(-2px); }
+html.v9 .integ9-side .note { opacity: .7; }
+html.v9 .rules9 { list-style: none; display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 0 clamp(16px, 2vw, 32px); margin-top: clamp(40px, 5vw, 72px); }
+@media (min-width: 900px) { html.v9 .rules9 { grid-template-columns: repeat(4, minmax(0, 1fr)); } }
+html.v9 .rules9 li { display: grid; gap: 10px; padding: 16px 0 6px; border-top: 1px solid rgba(255, 255, 255, .12); }
+html.v9 .rules9 p { font: 300 clamp(17px, 1.35vw, 21px)/1.25 var(--display); letter-spacing: -.01em; color: var(--ink); }
+
+/* the closing: more air between the lines and the button */
+html.v9 .call4-in .cta { margin-top: clamp(26px, 3.2vw, 52px); }
+
+/* What changes: plain numbers, white for now */
+html.v9 .gains .gn { color: #FFFFFF; -webkit-text-fill-color: #FFFFFF; background: none; }
