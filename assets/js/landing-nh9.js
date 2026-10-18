@@ -659,6 +659,17 @@ function resize() { if (bg) bg.r.setSize(innerWidth, innerHeight, false); if (gl
 resize(); addEventListener('resize', resize);
 gsap.ticker.add(time => frame(time));
 
+/* ---------------------------------------------------------------- agent systems cards: the How cards' hover */
+// under the pointer a card turns a little toward it (a third of v3's tilt, as the How cards in v9) and a pane of light follows
+if (matchMedia('(hover: hover) and (pointer: fine)').matches && !reduced) $$('.sys').forEach(c => {
+  c.addEventListener('pointermove', e => {
+    const r = c.getBoundingClientRect(), u = (e.clientX - r.left) / r.width, w = (e.clientY - r.top) / r.height;
+    c.style.setProperty('--ry', ((u - .5) * 22 * .3).toFixed(2) + 'deg'); c.style.setProperty('--rx', ((w - .5) * -12 * .3).toFixed(2) + 'deg');
+    c.style.setProperty('--gx', (u * 100).toFixed(1) + '%'); c.style.setProperty('--gy', (w * 100).toFixed(1) + '%'); c.classList.add('hot');
+  });
+  c.addEventListener('pointerleave', () => { c.style.setProperty('--ry', '0deg'); c.style.setProperty('--rx', '0deg'); c.classList.remove('hot'); });
+});
+
 /* ---------------------------------------------------------------- the panel (drawn by landing-nh7.js) */
 function applySettings() {
   if (!gl) return;
