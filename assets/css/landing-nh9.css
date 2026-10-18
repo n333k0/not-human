@@ -52,3 +52,23 @@ html.v9 .call4-in .cta { margin-top: clamp(26px, 3.2vw, 52px); }
 
 /* What changes: plain numbers, white for now */
 html.v9 .gains .gn { color: #FFFFFF; -webkit-text-fill-color: #FFFFFF; background: none; }
+
+/* ---------------------------------------------------------------- owner notes, 2026-10-18 (late) */
+/* the glass panel is hidden for now; add ?panel to the address to bring it back */
+html.v9:not(.show-panel) .nh-panel { display: none !important; }
+/* the phone menu button: a thin ring, the two lines dead centre (Safari pads buttons by default) */
+html.v9 .burger-btn { padding: 0; background: none; box-shadow: inset 0 0 0 1px rgba(255, 255, 255, .22); }
+html.v9 .burger { display: block; }
+/* the phone header turns its children into left-aligned flex boxes; the button's lines must stay centred */
+html.v9 .site-header .nbar > .burger-btn { justify-content: center; align-items: center; }
+/* a drawn arrow in every button, never the ↗ glyph (phones turn it into an emoji) */
+html.v9 .ar { width: .8em; height: .8em; flex: none; display: inline-block; vertical-align: -.05em; }
+/* the closing on a phone: the two lines wrap and scale; the footer stacks */
+@media (max-width: 760px) {
+  html.v9 .call-lines .ln { white-space: normal; display: block; }
+  html.v9 .call .big.call-lines { font-size: clamp(30px, 9.4vw, 44px); line-height: 1.06; text-wrap: balance; }
+  html.v9 .call4-in .cta { margin-top: 18px; }
+  html.v9 .call4 .foot { flex-direction: column; align-items: flex-start; gap: 14px; padding-bottom: calc(22px + env(safe-area-inset-bottom, 0px)); }
+  html.v9 .foot-nav { gap: 8px 18px; }
+  html.v9 .foot-meta { gap: 4px 14px; }
+}
