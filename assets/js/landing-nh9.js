@@ -54,7 +54,10 @@ const SHADOWS = { off: { vig: 0, halo: 0 }, vignette: { vig: .55, halo: 0 }, hal
 // the owner's values (in chat, 2026-10-18), plus v9's two new knobs: cursor (the lights that follow the mouse) and rim (how
 // strongly the orb keeps to the shape's edge)
 const DEF = Object.assign({}, LOOKS.soft, { look: 'soft', form: 'sphere', lights: 'backlit', lightCol: 'lavender', room: 'night', grainMode: 'film', shadow: 'halo', layer: 'auto',
-  orb: 1, orbSize: .16, ring: .6, aura: .6, leak: 0, grain: .018, cursor: .6, orbRim: .75 });   // the owner's values, 2026-10-18 (late)
+  orb: 1, orbSize: .16, ring: .6, aura: .6, leak: 0, grain: .018, cursor: .6, orbRim: .75,
+  // v10 (owner, 2026-10-18): a thick glass wall on every node and tube, the double edge that showed only when two nodes
+  // crossed during the scroll. 0 = v9's thin glass; pages opt in with window.NH_WALL.
+  wall: +(window.NH_WALL || 0), wallGlow: +(window.NH_WALL_GLOW || 1) });   // the owner's values, 2026-10-18 (late)
 // saved panel values count only while the panel is shown (?panel): everyone else sees the defaults
 const G = Object.assign({}, DEF, (() => { try { return root.classList.contains('show-panel') ? JSON.parse(localStorage.getItem('nh9') || '{}') : {}; } catch (e) { return {}; } })());
 // light rigs, in world units (the camera sits at z ≈ 6.6 looking at the origin). orb: placed under the pointer's light,
@@ -138,7 +141,7 @@ const GLASS_VERT = /* glsl */`
   }`;
 const GLASS_FRAG = ROOM + /* glsl */`
   uniform mat4 uProj; uniform vec2 uBuf;
-  uniform float uRod, uGeoR, uRefract, uDisperse, uBody, uRim, uRimPow, uSpec, uFade;
+  uniform float uRod, uGeoR, uRefract, uDisperse, uBody, uRim, uRimPow, uSpec, uFade, uWall, uWallGlow;
   uniform vec3 uTint; uniform vec3 uLP[3]; uniform vec3 uLC[3]; uniform float uLS[3];
   varying vec3 vN; varying vec3 vW; varying vec3 vA; varying float vRad; varying vec3 vL;
   vec2 toUv(vec3 p) { vec4 c = uProj * viewMatrix * vec4(p, 1.0); return c.xy / c.w * .5 + .5; }
@@ -151,7 +154,12 @@ const GLASS_FRAG = ROOM + /* glsl */`
     float f = 1.0 - ndv;
     if (cap > .5) f = smoothstep(.35, 1.0, length(vL.xz) / uGeoR) * .95;
     // refraction: follow the bent ray through a thick lens and read the room where it lands, once per colour channel
-    float th = vRad * uRefract * 4.0;
+    // the wall: how far out from the axis this fragment sits (0 centre, 1 edge); between 1 - uWall and 1 we look through the
+    // glass itself, so it refracts harder and glows, and the inner surface draws a second, colour-split edge
+    float rho = cap > .5 ? length(vL.xz) / uGeoR : sqrt(max(0.0, 1.0 - ndv * ndv));
+    float ri = 1.0 - uWall, on = step(.001, uWall);
+    float wall = on * smoothstep(ri - .05, ri + .03, rho);
+    float th = vRad * uRefract * 4.0 * (1.0 + wall * 1.6);
     vec3 rr = refract(-V, N, 1.0 / (1.45 - uDisperse)), rg = refract(-V, N, 1.0 / 1.45), rb = refract(-V, N, 1.0 / (1.45 + uDisperse));
     vec3 seen = vec3(room(toUv(vW + rr * th)).r, room(toUv(vW + rg * th)).g, room(toUv(vW + rb * th)).b);
     vec3 body = seen * mix(vec3(1.0), uTint, .4) * 1.1;
@@ -169,14 +177,16 @@ const GLASS_FRAG = ROOM + /* glsl */`
     }
     // the edge: brighter where the surface turns away, lit by what the room holds there
     light += pow(f, uRimPow) * uRim * (.35 + min(seen * 2.5, vec3(.8))) * mix(vec3(1.0), uTint, .3);
-    float a = uBody * (.55 + .45 * f);
+    vec3 innerEdge = vec3(exp(-pow((rho - ri * 1.012) / .045, 2.0)), exp(-pow((rho - ri) / .045, 2.0)), exp(-pow((rho - ri * .988) / .045, 2.0)));
+    light += on * uWallGlow * (wall * .36 * (.5 + min(seen * 2.0, vec3(.9))) + innerEdge * .42) * mix(vec3(1.0), uTint, .35);
+    float a = uBody * (.55 + .45 * f) + wall * .18 * uWallGlow;
     vec3 col = body * a + light;
     gl_FragColor = vec4(col, clamp(a + dot(light, vec3(.3)) * .6, 0.0, 1.0)) * uFade;
   }`;
 const GU = Object.assign({}, U, {
   uProj: { value: new THREE.Matrix4() }, uBuf: { value: new THREE.Vector2(1, 1) },
   uRefract: { value: G.refract }, uDisperse: { value: G.disperse }, uBody: { value: G.body }, uRim: { value: G.rim }, uRimPow: { value: G.rimPow },
-  uSpec: { value: G.spec }, uFade: { value: 1 }, uTint: { value: new THREE.Color(G.tint) },
+  uSpec: { value: G.spec }, uFade: { value: 1 }, uWall: { value: G.wall }, uWallGlow: { value: G.wallGlow }, uTint: { value: new THREE.Color(G.tint) },
   uLP: { value: [new THREE.Vector3(), new THREE.Vector3(), new THREE.Vector3()] }, uLC: { value: [new THREE.Vector3(), new THREE.Vector3(), new THREE.Vector3()] },
   uLS: { value: [10, 10, 10] },
 });
@@ -674,7 +684,7 @@ if (matchMedia('(hover: hover) and (pointer: fine)').matches && !reduced) $$('.s
 /* ---------------------------------------------------------------- the panel (drawn by landing-nh7.js) */
 function applySettings() {
   if (!gl) return;
-  const set = { uRefract: G.refract, uDisperse: G.disperse, uBody: G.body, uRim: G.rim, uRimPow: G.rimPow, uSpec: G.spec };
+  const set = { uRefract: G.refract, uDisperse: G.disperse, uBody: G.body, uRim: G.rim, uRimPow: G.rimPow, uSpec: G.spec, uWall: G.wall, uWallGlow: G.wallGlow };
   for (const m of gl.mats) { for (const [k, v] of Object.entries(set)) m.uniforms[k].value = +v; m.uniforms.uTint.value.set(G.tint); }
   const c = gl.compMat.uniforms; c.uSoft.value = +G.soft; c.uBloom.value = +G.bloom; c.uCA.value = +G.ca; c.uGrain.value = +G.grain;
   gl.setForm(G.form);
@@ -701,7 +711,7 @@ window.NH_PANEL = {
   ],
   colors: [['Tint', 'tint']],
   knobs: [
-    ['Glass', [['refract', 0, 1.5, .01], ['disperse', 0, .3, .002], ['body', 0, 1, .01], ['rim', 0, 3, .01], ['rimPow', .8, 6, .05], ['spec', 0, 3, .01]]],
+    ['Glass', [['refract', 0, 1.5, .01], ['disperse', 0, .3, .002], ['body', 0, 1, .01], ['rim', 0, 3, .01], ['rimPow', .8, 6, .05], ['spec', 0, 3, .01], ['wall', 0, .45, .005], ['wallGlow', 0, 2.5, .01]]],
     ['Image', [['soft', 0, 1, .01], ['bloom', 0, 3, .01], ['bloomR', .2, 3, .01], ['ca', 0, 10, .05], ['grain', 0, .2, .002]]],
     ['Room', [['orb', 0, 2.5, .01], ['orbSize', .04, .4, .002], ['orbRim', 0, 1, .01], ['cursor', 0, 2, .01], ['ring', 0, 2, .01], ['aura', 0, 2, .01], ['leak', 0, 2, .01]]],
   ],
