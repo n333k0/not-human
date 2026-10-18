@@ -410,8 +410,12 @@ const targets = $$('.targets i');
 let heroT = 0, intro = reduced ? 1 : 0, shiftX = 0;
 ScrollTrigger.create({ trigger: hero, start: 'top top', end: 'bottom bottom', onUpdate: s => { heroT = s.progress; } });
 gsap.to({ v: 0 }, { v: 1, duration: reduced ? 0 : 1.6, ease: 'expo.out', delay: reduced ? 0 : 1.7, onUpdate() { intro = this.targets()[0].v; } });
+// v10 opening (owner, 2026-10-18): the page starts on one big, thick-walled sphere, lens-sized like the About one; over the first
+// OPEN of the scroll it settles to the old start size, then the letter story runs, a touch quicker, inside the same hero length
+const OPEN = +(window.NH_OPEN || 0); let heroOpen = 0;
 function heroPose(o, t) {
-  const spread = io(seg(t, .04, .18)) * (1 - io(seg(t, .80, .94)));
+  heroOpen = OPEN ? 1 - io(seg(t, 0, OPEN)) : 0;
+  const spread = io(seg(t, OPEN || .04, .18)) * (1 - io(seg(t, .80, .94)));
   const sepK = o3(clamp(spread * 2.2)), gone = io(seg(t, .18, .30)), h = io(seg(t, .42, .54));
   if (t < .18) o.q.copy(Q_START);
   else if (t < .34) o.q.copy(Q_START).slerp(Q_N, io(seg(t, .18, .32)));
@@ -423,8 +427,8 @@ function heroPose(o, t) {
   for (let i = 0; i < 27; i++) o.Z[i] = intro * (IS_STROKE[i] ? lerp(2.1, 1, sepK) * lerp(1, nodeMask(i, h), sepK) : lerp(2.1, .5, sepK) * (1 - gone));
   o.D.fill(0);
   AMB_ROD.forEach((rs, k) => rs.forEach((r, j) => { const w0 = .22 + k * .03 + j * .04; o.D[r] = o3(seg(t, w0, w0 + .06)) * shrink * letterMask(k, h); }));
-  o.lines = lerp(.62, .8, seg(t, .62, .70)) * seg(t, .06, .14) * (1 - seg(t, .80, .86));
-  o.x = shiftX; o.y = 0; o.S = 1; o.w = 1; o.fade = 1; o.lean = 1; o.tilt = 0;
+  o.lines = lerp(.62, .8, seg(t, .62, .70)) * seg(t, OPEN ? OPEN + .01 : .06, .14) * (1 - seg(t, .80, .86));
+  o.x = shiftX; o.y = 0; o.S = 1 + 1.1 * heroOpen; o.w = 1; o.fade = 1; o.lean = 1; o.tilt = 0;
   const back = io(seg(t, .79, .86));
   const camZ = lerp(lerp(5.9, 3.0, io(seg(t, .60, .78))), 6.6, back);
   const flat = Math.max(seg(t, .29, .32) * (1 - seg(t, .405, .43)), seg(t, .53, .56) * (1 - seg(t, .63, .66)));
@@ -568,7 +572,7 @@ function setOrb(o, shape) {
 }
 
 /* ---------------------------------------------------------------- one loop */
-let which = 'hero', lastTargets = null, lockFlat = 0, lockGoal = 0, wallK = 1, wallT = 0;
+let which = 'hero', lastTargets = null, lockFlat = 0, lockGoal = 0, wallGoal = 1;
 const orbFx = { x: .5, y: .5, s: 1 };
 function frame(time) {
   ptr.x += (ptr.tx - ptr.x) * (reduced ? 1 : .07); ptr.y += (ptr.ty - ptr.y) * (reduced ? 1 : .07);
@@ -595,7 +599,7 @@ function frame(time) {
   if (cam.fov !== fov) { cam.fov = fov; cam.updateProjectionMatrix(); }
   const lean = 1 - flat;
   cam.position.set(ptr.x * .5 * lean, -ptr.y * .35 * lean, camZ * narrow * zoomK); cam.lookAt(0, 0, 0); cam.updateMatrixWorld();
-  lockGoal = 0;
+  lockGoal = 0; wallGoal = 1 + (hr.bottom > ih + 1 ? .6 * heroOpen : 0);   // the opening sphere has the thickest wall
   if (hr.bottom <= ih + 1) {
     const unit = ppu(); heroPose(A, 1);
     const ar = about.getBoundingClientRect(), hw = howSec.getBoundingClientRect();
@@ -609,7 +613,8 @@ function frame(time) {
       ballPose(B, innerWidth / 2 + Math.sin(b * Math.PI) * innerWidth * .04, ih * .5, big, unit);
       B.q.copy(qa(Y, b * 60)); B.lean = .6;
       howPose(C, 0, unit, time, hx, Math.min(hy, ih * .9));
-      const k1 = io(seg(b, 0, .28)), k2 = io(seg(b, .7, 1));
+      const k1 = io(seg(b, 0, .28)), k2 = io(seg(b, .58, 1));      // owner 2026-10-18: the descent starts earlier and runs longer
+      wallGoal = 1 - k1 * (1 - io(seg(b, .5, .72)));            // thin while it reads as a lens, thick again before it descends far
       mixPose(TMP, A, B, k1);
       mixPose(OUT, TMP, C, k2);
     } else if (hw.bottom > ih) {
@@ -652,9 +657,7 @@ function frame(time) {
     U.uHalo.value.set((c.x + 1) / 2, (c.y + 1) / 2, r, (SHADOWS[G.shadow] || SHADOWS.off).halo * OUT.fade); }
   placeLights();
   // v10: the thick wall stays on nodes and tubes, but the About lens goes back to v9's thin glass (owner, 2026-10-18)
-  wallK += ((which === 'about' ? 0 : 1) - wallK) * (reduced ? 1 : 1 - Math.exp(-Math.min(.25, Math.max(0, time - wallT)) * 6));
-  wallT = time;
-  for (const m of gl.mats) m.uniforms.uWall.value = G.wall * wallK;
+  for (const m of gl.mats) m.uniforms.uWall.value = G.wall * wallGoal;
   gl.render();
   // the hero's corner marks follow some of the letter's nodes
   if (which === 'hero' && targetsOn) {

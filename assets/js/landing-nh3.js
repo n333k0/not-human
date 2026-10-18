@@ -594,7 +594,7 @@ function updateHero() {
     if (on !== stageOn[i]) { stageOn[i] = on; st.classList.toggle('on', on); if (on) scramble(st.querySelector('.big'), 1000); }
   });
   // v6: Not / Human appear only once you scroll (the bar has shrunk) and leave as the mark unravels
-  const fo = document.documentElement.classList.contains('v6') ? seg(heroT, .004, .03) * (1 - seg(heroT, .12, .17)) : 1 - seg(heroT, .03, .1);
+  const fo = document.documentElement.classList.contains('v6') ? (window.NH_OPEN ? seg(heroT, window.NH_OPEN * .6, window.NH_OPEN + .015) : seg(heroT, .004, .03)) * (1 - seg(heroT, .12, .17)) : 1 - seg(heroT, .03, .1);
   flanks.forEach(f => f.style.setProperty('--fo', fo.toFixed(3)));
   hero.style.setProperty('--co', (1 - seg(heroT, .0, .03)).toFixed(3));
 }
