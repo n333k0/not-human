@@ -140,13 +140,19 @@ const GLASS_VERT = /* glsl */`
     gl_Position = projectionMatrix * viewMatrix * w;
   }`;
 const GLASS_FRAG = ROOM + /* glsl */`
-  uniform mat4 uProj; uniform vec2 uBuf;
+  uniform mat4 uProj; uniform vec2 uBuf; uniform vec2 uPtr; uniform float uGlitch;
   uniform float uRod, uGeoR, uRefract, uDisperse, uBody, uRim, uRimPow, uSpec, uFade, uWall, uWallGlow;
   uniform vec3 uTint; uniform vec3 uLP[3]; uniform vec3 uLC[3]; uniform float uLS[3];
   varying vec3 vN; varying vec3 vW; varying vec3 vA; varying float vRad; varying vec3 vL;
   vec2 toUv(vec3 p) { vec4 c = uProj * viewMatrix * vec4(p, 1.0); return c.xy / c.w * .5 + .5; }
   void main() {
     vec3 N = normalize(vN), V = normalize(cameraPosition - vW);
+    // v10 opening: under the pointer the glass tears into horizontal slices that jump, wobble and split their colours
+    vec2 suv = toUv(vW), dq = (suv - uPtr) * vec2(uBuf.x / uBuf.y, 1.0);
+    float gf = uGlitch * smoothstep(.62, .0, length(dq));
+    float grow = floor(suv.y * 46.0 + floor(uTime * 12.0) * 13.0), gh = fract(sin(grow * 78.233) * 43758.5453);
+    float gband = step(.68, gh) * gf;
+    N = normalize(N + vec3((gh - .5) * gband * 1.8 + sin(suv.y * 70.0 + uTime * 10.0) * .4 * gf, cos(suv.x * 55.0 - uTime * 8.0) * .4 * gf, 0.0));
     float ndv = clamp(dot(N, V), 0.0, 1.0);
     // a rod's end cap: shade it as a disc with a lit rim, so you can see where the tube stops
     float cap = uRod > .5 ? step(.7, abs(dot(N, vA))) : 0.0;
@@ -160,7 +166,7 @@ const GLASS_FRAG = ROOM + /* glsl */`
     float ri = 1.0 - uWall, on = step(.001, uWall);
     float wall = on * smoothstep(ri - .05, ri + .03, rho);
     float th = vRad * uRefract * 4.0 * (1.0 + wall * 1.6);
-    vec3 rr = refract(-V, N, 1.0 / (1.45 - uDisperse)), rg = refract(-V, N, 1.0 / 1.45), rb = refract(-V, N, 1.0 / (1.45 + uDisperse));
+    vec3 rr = refract(-V, N, 1.0 / (1.45 - uDisperse * (1.0 + gf * 9.0))), rg = refract(-V, N, 1.0 / 1.45), rb = refract(-V, N, 1.0 / (1.45 + uDisperse * (1.0 + gf * 9.0)));
     vec3 seen = vec3(room(toUv(vW + rr * th)).r, room(toUv(vW + rg * th)).g, room(toUv(vW + rb * th)).b);
     vec3 body = seen * mix(vec3(1.0), uTint, .4) * 1.1;
     // the lights live in the world: a soft source gives a broad, dim lobe; a small one a sharp, bright one
@@ -180,10 +186,12 @@ const GLASS_FRAG = ROOM + /* glsl */`
     vec3 innerEdge = vec3(exp(-pow((rho - ri * 1.012) / .045, 2.0)), exp(-pow((rho - ri) / .045, 2.0)), exp(-pow((rho - ri * .988) / .045, 2.0)));
     light += on * uWallGlow * (wall * .36 * (.5 + min(seen * 2.0, vec3(.9))) + innerEdge * .42) * mix(vec3(1.0), uTint, .35);
     float a = uBody * (.55 + .45 * f) + wall * .18 * uWallGlow;
+    light += gband * vec3(.45, .65, 1.0) * .55 + gf * gf * vec3(.35, .1, .5) * .25;
     vec3 col = body * a + light;
     gl_FragColor = vec4(col, clamp(a + dot(light, vec3(.3)) * .6, 0.0, 1.0)) * uFade;
   }`;
 const GU = Object.assign({}, U, {
+  uPtr: { value: new THREE.Vector2(-9, -9) }, uGlitch: { value: 0 },
   uProj: { value: new THREE.Matrix4() }, uBuf: { value: new THREE.Vector2(1, 1) },
   uRefract: { value: G.refract }, uDisperse: { value: G.disperse }, uBody: { value: G.body }, uRim: { value: G.rim }, uRimPow: { value: G.rimPow },
   uSpec: { value: G.spec }, uFade: { value: 1 }, uWall: { value: G.wall }, uWallGlow: { value: G.wallGlow }, uTint: { value: new THREE.Color(G.tint) },
@@ -573,7 +581,7 @@ function setOrb(o, shape) {
 
 /* ---------------------------------------------------------------- one loop */
 let which = 'hero', lastTargets = null, lockFlat = 0, lockGoal = 0, wallGoal = 1;
-const orbFx = { x: .5, y: .5, s: 1 };
+const orbFx = { x: .5, y: .5, s: 1 }, glitchP = { x: -1e4, y: -1e4, v: 0, on: 0 };
 function frame(time) {
   ptr.x += (ptr.tx - ptr.x) * (reduced ? 1 : .07); ptr.y += (ptr.ty - ptr.y) * (reduced ? 1 : .07);
   const kp = reduced ? 1 : .08;
@@ -599,7 +607,13 @@ function frame(time) {
   if (cam.fov !== fov) { cam.fov = fov; cam.updateProjectionMatrix(); }
   const lean = 1 - flat;
   cam.position.set(ptr.x * .5 * lean, -ptr.y * .35 * lean, camZ * narrow * zoomK); cam.lookAt(0, 0, 0); cam.updateMatrixWorld();
-  lockGoal = 0; wallGoal = 1 - (hr.bottom > ih + 1 ? .45 * heroOpen : 0);   // the opening sphere is 2.1x bigger, so its wall is thinner to read as thick as the old start
+  { // the hover glitch lives only on the opening sphere; it fades as the sphere settles and is gone once the hero moves on
+    const sp = Math.min(1, Math.hypot(ptr.px - glitchP.x, ptr.py - glitchP.y) / ih * 6); glitchP.x = ptr.px; glitchP.y = ptr.py;
+    glitchP.v += (sp - glitchP.v) * .2; glitchP.on += ((ptr.px > -1e3 ? 1 : 0) - glitchP.on) * .12;
+    GU.uGlitch.value = reduced ? 0 : seg(heroOpen, .12, .55) * glitchP.on * (.55 + .45 * glitchP.v);
+    GU.uPtr.value.set(ptr.px / innerWidth, 1 - ptr.py / ih);
+  }
+  lockGoal = 0; wallGoal = 1 - (hr.bottom > ih + 1 ? .3 * heroOpen : 0);   // the opening sphere is 2.1x bigger, so its wall is thinner to read as thick as the old start
   if (hr.bottom <= ih + 1) {
     const unit = ppu(); heroPose(A, 1);
     const ar = about.getBoundingClientRect(), hw = howSec.getBoundingClientRect();
