@@ -22,3 +22,8 @@ html.v10 .faq details:first-child { border-top-color: transparent; }
 html.v10 .faq details:last-child { border-bottom-color: transparent; }
 @media (max-width: 900px) { html.v10 .faq { width: 100%; } }
 html.v10 .lightfield { display: none; }
+
+/* Phones: every hero line sits at the bottom of the screen, inside the margins, so it stays away from the 3D object. */
+@media (max-width: 899px) {
+  html.v10 .stage { left: var(--gut); right: auto; top: auto; bottom: calc(env(safe-area-inset-bottom, 0px) + 30px); max-width: calc(100% - var(--gut) * 2); }
+}
