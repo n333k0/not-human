@@ -583,7 +583,7 @@ function squarePose(o, unit, time) {
 /* ---------------------------------------------------------------- the closing (owner, 2026-10-18): from Questions to the footer */
 // a huge, thick-walled sphere rises from below the screen and settles, then drifts up while it shrinks to a node and runs through
 // the shapes (pair, triangle, tetrahedron, octahedron), becomes the N, turns into the H, and lands behind the call as the N / H
-// ambigram, slowly turning between the two
+// ambigram turning N to H, then bursts into the whole lattice, big and thin, behind the call
 let closeWall = 1;
 function nhPose(o, a, unit, cx, cy, spacePx, time) {
   const h = io(seg(a, 70, 20));
@@ -603,12 +603,16 @@ function closingPose(o, u, unit, time) {
     const bigY = lerp(lerp(ih + rBig * 1.08, ih + rBig * .375, rise), cy, settle);
     ballPose(o, cx, bigY, lerp(rBig, r0, settle), unit); return;
   }
-  if (u < .62) { howPose(o, 4 * io(seg(u, .34, .62)), unit, time, cx, cy); return; }
-  const aSeq = 90 * (1 - io(seg(u, .74, .82))), aOsc = 45 + 45 * Math.cos(time * .5), a = lerp(aSeq, aOsc, io(seg(u, .84, .92)));
-  const size = lerp(sp * 1.05, Math.min(ih * .27, innerWidth * .3), io(seg(u, .82, 1)));
-  nhPose(A, a, unit, cx, cy, size, time);
-  if (u < .74) { howPose(C, 4, unit, time, cx, cy); mixPose(o, C, A, io(seg(u, .62, .74))); return; }
-  mixPose(o, A, A, 0);
+  if (u < .56) { howPose(o, 4 * io(seg(u, .34, .56)), unit, time, cx, cy); return; }
+  nhPose(A, 90 * (1 - io(seg(u, .66, .74))), unit, cx, cy, sp * 1.05, time);                // the N, then it turns into the H
+  if (u < .64) { howPose(C, 4, unit, time, cx, cy); mixPose(o, C, A, io(seg(u, .56, .64))); return; }
+  if (u < .76) { mixPose(o, A, A, 0); return; }
+  // then it bursts into the whole lattice, huge and thin, so the big text reads over a web of many connected points
+  const R = Math.max(innerWidth, ih) * .34, k = o3(seg(u, .76, .94)), w = toWorld(cx, cy);
+  setLat(B, 1, 1, 1); B.Z.fill(.32); B.D.fill(0); for (let r = 0; r < 54; r++) B.D[r] = 1;
+  B.x = w.x; B.y = w.y; B.S = R / unit; B.q.copy(qa(Y, 20 + time * 6)).premultiply(qa(X, -18 + Math.sin(time * .2) * 6));
+  B.w = .3; B.lines = 0; B.fade = 1; B.lean = .4; B.tilt = 0;
+  mixPose(o, A, B, k); o.S *= 1 + Math.sin(Math.PI * k) * .3;
 }
 
 /* ---------------------------------------------------------------- the lights: rigs in the world */
