@@ -460,7 +460,7 @@ const ppu = () => { const a = toWorld(innerWidth / 2, innerHeight / 2), b = toWo
 const hero = document.querySelector('.hero'), stages = $$('.stage'), STAGE_AT = [[.20, .36], [.42, .58], [.64, .80]];
 const targets = $$('.targets i');
 let heroT = 0, intro = reduced ? 1 : 0, shiftX = 0;
-const heroMap = p => { const K = window.NH_TAIL; if (!K || innerWidth >= 900) return p; const D0 = .14, c = 1 - (D0 - K), pe = .86 / c; return p <= pe ? p * c : .86 + (p - pe) / (1 - pe) * D0; };   // phones: the dead tail of the hero (t .86 to 1) is cut to K
+const heroMap = p => { const K = window.NH_TAIL; if (!K || innerWidth >= 900) return p; const D0 = .20, c = 1 - (D0 - K), pe = .80 / c; return p <= pe ? p * c : .80 + (p - pe) / (1 - pe) * D0; };   // phones: everything after the third line (t .80 to 1) is squeezed into K of the hero
 ScrollTrigger.create({ trigger: hero, start: 'top top', end: 'bottom bottom', onUpdate: s => { heroT = heroMap(s.progress); } });
 gsap.to({ v: 0 }, { v: 1, duration: reduced ? 0 : 1.6, ease: 'expo.out', delay: reduced ? 0 : 1.7, onUpdate() { intro = this.targets()[0].v; } });
 // v10 opening (owner, 2026-10-18): the page starts on one big, thick-walled sphere, lens-sized like the About one; over the first
@@ -711,7 +711,7 @@ function frame(time) {
       ballPose(B, innerWidth / 2 + Math.sin(b * Math.PI) * innerWidth * .04, ih * .5, big, unit);
       B.q.copy(qa(Y, b * 60)); B.lean = .6;
       howPose(C, 0, unit, time, hx, Math.min(hy, ih * .9));
-      const k1 = io(seg(b, 0, .28)), k2 = io(seg(b, .58, 1));      // owner 2026-10-18: the descent starts earlier and runs longer
+      const k1 = io(seg(b, 0, innerWidth < 900 ? .12 : .28)), k2 = io(seg(b, .58, 1));      // owner 2026-10-18: the descent starts earlier and runs longer
       wallGoal = 1 - k1 * (1 - io(seg(b, .5, .72)));            // thin while it reads as a lens, thick again before it descends far
       mixPose(TMP, A, B, k1);
       mixPose(OUT, TMP, C, k2);

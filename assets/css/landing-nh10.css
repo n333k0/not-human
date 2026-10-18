@@ -34,8 +34,9 @@ html.v10 .lightfield { display: none; }
   html.v10 .hero-pin, html.v10 .call-pin { height: 100dvh; }
 }
 
-/* Phones: the hero loses its dead tail (see NH_TAIL: 100vh + .91 of the other 460vh) and the About sentence sits closer to the lens. */
+/* Phones: the hero loses its dead tail (see NH_TAIL: 100vh + .87 of the other 460vh) and the About sentence sits closer to the lens. */
 @media (max-width: 899px) {
-  html.v10 .hero { height: 519vh; }
-  html.v10 .about { padding-top: 56px; }
+  html.v10 .hero { height: 500vh; }
+  html.v10 .about { padding-top: 0; margin-top: -24vh; position: relative; z-index: 1; }
+  html.v10 .about-pin { padding-top: 0; }
 }

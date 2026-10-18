@@ -584,7 +584,7 @@ const hero = document.querySelector('.hero'), call = document.querySelector('.ca
 const stages = $$('.stage'), STAGE_AT = [[.20, .36], [.42, .58], [.64, .80]];
 const flanks = $$('.flank');
 let heroT = 0, callT = 0, intro = reduced ? 1 : 0, which = 'hero';
-const heroMap = p => { const K = window.NH_TAIL; if (!K || innerWidth >= 900) return p; const D0 = .14, c = 1 - (D0 - K), pe = .86 / c; return p <= pe ? p * c : .86 + (p - pe) / (1 - pe) * D0; };   // phones: the dead tail of the hero (t .86 to 1) is cut to K
+const heroMap = p => { const K = window.NH_TAIL; if (!K || innerWidth >= 900) return p; const D0 = .20, c = 1 - (D0 - K), pe = .80 / c; return p <= pe ? p * c : .80 + (p - pe) / (1 - pe) * D0; };   // phones: everything after the third line (t .80 to 1) is squeezed into K of the hero
 ScrollTrigger.create({ trigger: hero, start: 'top top', end: 'bottom bottom', onUpdate: s => { heroT = heroMap(s.progress); } });
 ScrollTrigger.create({ trigger: call, start: 'top bottom', end: 'bottom bottom', onUpdate: s => { callT = s.progress; } });
 gsap.to({ v: 0 }, { v: 1, duration: reduced ? 0 : 1.6, ease: 'expo.out', delay: reduced ? 0 : 1.7, onUpdate() { intro = this.targets()[0].v; } });
