@@ -72,3 +72,18 @@ html.v9 .ar { width: .8em; height: .8em; flex: none; display: inline-block; vert
   html.v9 .foot-nav { gap: 8px 18px; }
   html.v9 .foot-meta { gap: 4px 14px; }
 }
+
+/* card buttons: a thin outline at rest; under the pointer they fill white and the text and arrow turn black, also while
+   the card itself is lit (the lit-card rule used to keep the text light: white on white) */
+html.v9 .card .card-btn, html.v9 .card.hot .card-btn { background: transparent; color: var(--ink); border-color: rgba(255, 255, 255, .45); transition: background .35s ease, color .35s ease, border-color .35s ease; }
+html.v9 .card .card-btn:hover, html.v9 .card.hot .card-btn:hover, html.v9 .card .card-btn:focus-visible { background: #F3F2F7; color: #07070A; border-color: #F3F2F7; }
+html.v9 .card-btn .ar { stroke: currentColor; }
+
+/* Fully integrated: the lede sits on the heading's line (right column), the square rides a little higher */
+html.v9 .integ9-head { align-items: flex-start; }
+html.v9 .integ9-lede { max-width: 46ch; margin: 0; }
+@media (min-width: 900px) {
+  html.v9 .integ9-head { display: grid; grid-template-columns: minmax(0, 5fr) minmax(0, 6fr); gap: clamp(28px, 4vw, 64px); }
+  html.v9 .integ9-in { align-items: start; margin-top: clamp(20px, 2.4vw, 36px); }
+  html.v9 .integ9 .mark-slot { margin-top: -3vw; }
+}
