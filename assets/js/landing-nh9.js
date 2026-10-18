@@ -131,8 +131,16 @@ try {
 const GLASS_VERT = /* glsl */`
   uniform float uRod, uGeoR;
   varying vec3 vN; varying vec3 vW; varying vec3 vA; varying float vRad; varying vec3 vL;
+  #if CUT
+  attribute vec4 aC0; attribute vec4 aC1; attribute vec4 aC2; attribute vec4 aC3;
+  varying vec4 vC0; varying vec4 vC1; varying vec4 vC2; varying vec4 vC3; varying vec3 vP;
+  #endif
   void main() {
     vL = position;
+    #if CUT
+    vC0 = aC0; vC1 = aC1; vC2 = aC2; vC3 = aC3;
+    vP = position * vec3(length(instanceMatrix[0].xyz), length(instanceMatrix[1].xyz), length(instanceMatrix[2].xyz));   // the tube's own units: x, z its width, y along it
+    #endif
     mat4 m = modelMatrix * instanceMatrix;
     vec4 w = m * vec4(position, 1.0); vW = w.xyz; vN = normalize(mat3(m) * normal);
     vA = uRod > .5 ? normalize(mat3(m) * vec3(0.0, 1.0, 0.0)) : vec3(0.0);
@@ -144,8 +152,17 @@ const GLASS_FRAG = ROOM + /* glsl */`
   uniform float uRod, uGeoR, uRefract, uDisperse, uBody, uRim, uRimPow, uSpec, uFade, uWall, uWallGlow;
   uniform vec3 uTint; uniform vec3 uLP[3]; uniform vec3 uLC[3]; uniform float uLS[3];
   varying vec3 vN; varying vec3 vW; varying vec3 vA; varying float vRad; varying vec3 vL;
+  #if CUT
+  varying vec4 vC0; varying vec4 vC1; varying vec4 vC2; varying vec4 vC3; varying vec3 vP;
+  #endif
   vec2 toUv(vec3 p) { vec4 c = uProj * viewMatrix * vec4(p, 1.0); return c.xy / c.w * .5 + .5; }
   void main() {
+    #if CUT
+    // a joint: at each node a tube keeps only the part that lies nearer its own direction than its neighbours' (a 45 degree
+    // miter at a corner, a clean T), so tubes meet evenly and never show through one another
+    if (dot(vP - vec3(0.0, vC0.w, 0.0), vC0.xyz) < -1e-5 || dot(vP - vec3(0.0, vC1.w, 0.0), vC1.xyz) < -1e-5 ||
+        dot(vP - vec3(0.0, vC2.w, 0.0), vC2.xyz) < -1e-5 || dot(vP - vec3(0.0, vC3.w, 0.0), vC3.xyz) < -1e-5) discard;
+    #endif
     vec3 N = normalize(vN), V = normalize(cameraPosition - vW);
     // v10 opening: under the pointer the glass tears into horizontal slices that jump, wobble and split their colours
     vec2 suv = toUv(vW), dq = (suv - uPtr) * vec2(uBuf.x / uBuf.y, 1.0);
@@ -186,8 +203,11 @@ const GLASS_FRAG = ROOM + /* glsl */`
     vec3 innerEdge = vec3(exp(-pow((rho - ri * 1.012) / .045, 2.0)), exp(-pow((rho - ri) / .045, 2.0)), exp(-pow((rho - ri * .988) / .045, 2.0)));
     light += on * uWallGlow * (wall * .36 * (.5 + min(seen * 2.0, vec3(.9))) + innerEdge * .42) * mix(vec3(1.0), uTint, .35);
     float a = uBody * (.55 + .45 * f) + wall * .18 * uWallGlow;
-    light += gband * vec3(.45, .65, 1.0) * .55 + gf * gf * vec3(.35, .1, .5) * .25;
-    vec3 col = body * a + light;
+    // TV static: coloured noise in 2px cells that changes 24 times a second, strongest under the pointer
+    vec2 sc = floor(gl_FragCoord.xy / 2.0); float stt = floor(uTime * 24.0);
+    vec3 sn = vec3(fract(sin(dot(sc + stt * 1.7, vec2(12.9898, 78.233))) * 43758.5453), fract(sin(dot(sc + stt * 2.3 + 7.0, vec2(39.346, 11.135))) * 43758.5453), fract(sin(dot(sc + stt * 3.1 + 13.0, vec2(73.156, 52.235))) * 43758.5453));
+    light += sn * gf * .75 * vec3(.85, .95, 1.1) + gband * (sn.r - .3) * .5;
+    vec3 col = body * a * (1.0 - gf * .65 * sn.g) + light;
     gl_FragColor = vec4(col, clamp(a + dot(light, vec3(.3)) * .6, 0.0, 1.0)) * uFade;
   }`;
 const GU = Object.assign({}, U, {
@@ -201,7 +221,7 @@ const GU = Object.assign({}, U, {
 // max blending: the glass is light and a little shade, so stacked pieces never pile up into a solid, and rods show
 // through the nodes as the inner edges of the reference cube do
 const glassMat = (rod, geoR) => new THREE.ShaderMaterial({
-  uniforms: Object.assign({}, GU, { uRod: { value: rod ? 1 : 0 }, uGeoR: { value: geoR } }),
+  uniforms: Object.assign({}, GU, { uRod: { value: rod ? 1 : 0 }, uGeoR: { value: geoR } }), defines: { CUT: rod ? 1 : 0 },
   vertexShader: GLASS_VERT, fragmentShader: GLASS_FRAG, transparent: true, depthWrite: false, depthTest: false,
   blending: THREE.CustomBlending, blendEquation: THREE.MaxEquation, blendSrc: THREE.OneFactor, blendDst: THREE.OneFactor,
 });
@@ -279,6 +299,8 @@ function makeGlass() {
   const nodes = new THREE.InstancedMesh(nodeGeo, glassMat(false, .27), 27); nodes.frustumCulled = false;
   const rodGeo = new THREE.CylinderGeometry(.085, .085, 1, 32, 1, false); rodGeo.translate(0, .5, 0);
   const rods = new THREE.InstancedMesh(rodGeo, glassMat(true, .085), NR); rods.frustumCulled = false;
+  const CUTS = [0, 1, 2, 3].map(() => new THREE.InstancedBufferAttribute(new Float32Array(NR * 4), 4));
+  CUTS.forEach((a, k) => rodGeo.setAttribute('aC' + k, a));
   const lineGeo = new THREE.BufferGeometry().setAttribute('position', new THREE.BufferAttribute(new Float32Array(EDGE_PAIRS.length * 6), 3));
   const lineMat = new THREE.LineBasicMaterial({ color: 0xFFFFFF, transparent: true, opacity: 0, depthTest: false, depthWrite: false });
   const lines = new THREE.LineSegments(lineGeo, lineMat); lines.frustumCulled = false; lines.renderOrder = -1;
@@ -361,11 +383,12 @@ function makeGlass() {
   function clear() { renderer.setRenderTarget(null); renderer.clear(); }
   size();
   const setForm = f => { nodes.geometry = f === 'cube' ? cubeGeo : nodeGeo; };
-  return { renderer, scene, camera, outer, inner, nodes, rods, lines, lineGeo, lineMat, compMat, size, render, clear, setForm, MARKS, markGeo, markMat, mats: [nodes.material, rods.material] };
+  return { renderer, scene, camera, outer, inner, nodes, rods, CUTS, lines, lineGeo, lineMat, compMat, size, render, clear, setForm, MARKS, markGeo, markMat, mats: [nodes.material, rods.material] };
 }
 
 /* ---------------------------------------------------------------- applying a pose */
 const dummy = new THREE.Object3D(), va = new THREE.Vector3(), vb = new THREE.Vector3(), vd = new THREE.Vector3();
+const INC = Array.from({ length: 27 }, () => []), RI = new Array(RODS.length).fill(null), qInv = new THREE.Quaternion(), uj = new THREE.Vector3();
 function apply(p) {
   const { outer, inner, nodes, rods, lineGeo, lineMat } = gl;
   outer.position.set(p.x, p.y, 0); outer.scale.setScalar(p.S); inner.quaternion.copy(p.q);
@@ -374,16 +397,41 @@ function apply(p) {
     dummy.position.set(p.P[i * 3], p.P[i * 3 + 1], p.P[i * 3 + 2]); dummy.scale.setScalar(Math.max(1e-4, p.Z[i])); dummy.updateMatrix(); nodes.setMatrixAt(i, dummy.matrix);
   }
   nodes.instanceMatrix.needsUpdate = true;
+  // joints: which tubes meet at which node, then for each tube end the planes that give it the zone nearest its own direction
+  for (const l of INC) l.length = 0;
   for (let r = 0; r < NR; r++) {
-    const d = p.D[r], [a, b] = RODS[r];
-    if (Math.abs(d) < .002) { dummy.position.set(0, 0, 0); dummy.scale.setScalar(1e-4); dummy.quaternion.identity(); dummy.updateMatrix(); rods.setMatrixAt(r, dummy.matrix); continue; }
-    const [s, e] = d > 0 ? [a, b] : [b, a];
-    va.set(p.P[s * 3], p.P[s * 3 + 1], p.P[s * 3 + 2]); vb.set(p.P[e * 3], p.P[e * 3 + 1], p.P[e * 3 + 2]);
-    vd.subVectors(vb, va); const len = vd.length();
-    if (len < 1e-4) { dummy.scale.setScalar(1e-4); dummy.updateMatrix(); rods.setMatrixAt(r, dummy.matrix); continue; }
-    dummy.position.copy(va); dummy.quaternion.setFromUnitVectors(UP, vd.divideScalar(len)); dummy.scale.set(p.w, len * Math.abs(d), p.w); dummy.updateMatrix();
+    RI[r] = null; const d = p.D[r];
+    if (Math.abs(d) < .002) continue;
+    const [a, b] = RODS[r], [s, e] = d > 0 ? [a, b] : [b, a], dir = new THREE.Vector3(p.P[e * 3] - p.P[s * 3], p.P[e * 3 + 1] - p.P[s * 3 + 1], p.P[e * 3 + 2] - p.P[s * 3 + 2]);
+    const len = dir.length(); if (len < 1e-4) continue;
+    dir.divideScalar(len); const ad = Math.abs(d); RI[r] = { s, e, dir, len, ad };
+    INC[s].push({ r, u: dir }); if (ad > .999) INC[e].push({ r, u: dir.clone().negate() });
+  }
+  const R0 = .085 * p.w;
+  for (let r = 0; r < NR; r++) {
+    const ri = RI[r], C = gl.CUTS;
+    for (let k = 0; k < 4; k++) C[k].array.fill(0, r * 4, r * 4 + 4);
+    if (!ri) { dummy.position.set(0, 0, 0); dummy.scale.setScalar(1e-4); dummy.quaternion.identity(); dummy.updateMatrix(); rods.setMatrixAt(r, dummy.matrix); continue; }
+    dummy.quaternion.setFromUnitVectors(UP, ri.dir); qInv.copy(dummy.quaternion).invert();
+    const ext = [0, 0], off = [0, 0], pl = [[], []], ends = ri.ad > .999 ? 2 : 1;
+    for (let k = 0; k < ends; k++) {
+      const node = k ? ri.e : ri.s, u = k ? va.copy(ri.dir).negate() : ri.dir, sign = k ? -1 : 1;
+      const near = INC[node].filter(x => x.r !== r).map(x => ({ x, c: u.dot(x.u) })).sort((m, n) => n.c - m.c).slice(0, 2);
+      // a T: two tubes in line and this one square to them: it stops flush against their edge, no wedge showing through the glass
+      if (near.length === 2 && Math.abs(near[0].c) < .2 && Math.abs(near[1].c) < .2 && near[0].x.u.dot(near[1].x.u) < -.9) { off[k] = R0; pl[k].push([0, sign, 0]); continue; }
+      for (const { x, c } of near) {
+        const cc = Math.min(.97, Math.max(-.999, c));
+        ext[k] = Math.min(2.6 * R0, Math.max(ext[k], R0 * Math.sqrt((1 + cc) / (1 - cc)) * (c < -.99 ? 0 : 1)));
+        uj.copy(x.u).applyQuaternion(qInv); pl[k].push([-uj.x, sign - uj.y, -uj.z]);
+      }
+    }
+    const yS = ext[0], yE = ext[0] + ri.len * ri.ad;
+    for (let k = 0; k < ends; k++) pl[k].forEach((n, j) => { const o = r * 4, a = C[k * 2 + j].array; a[o] = n[0]; a[o + 1] = n[1]; a[o + 2] = n[2]; a[o + 3] = k ? yE - off[1] : yS + off[0]; });
+    va.set(p.P[ri.s * 3], p.P[ri.s * 3 + 1], p.P[ri.s * 3 + 2]);
+    dummy.position.copy(va).addScaledVector(ri.dir, -ext[0]); dummy.scale.set(p.w, ext[0] + ri.len * ri.ad + ext[1], p.w); dummy.updateMatrix();
     rods.setMatrixAt(r, dummy.matrix);
   }
+  gl.CUTS.forEach(c => { c.needsUpdate = true; });
   rods.instanceMatrix.needsUpdate = true;
   lineMat.opacity = p.lines; lines(p);
   for (const m of gl.mats) m.uniforms.uFade.value = p.fade;
