@@ -203,11 +203,7 @@ const GLASS_FRAG = ROOM + /* glsl */`
     vec3 innerEdge = vec3(exp(-pow((rho - ri * 1.012) / .045, 2.0)), exp(-pow((rho - ri) / .045, 2.0)), exp(-pow((rho - ri * .988) / .045, 2.0)));
     light += on * uWallGlow * (wall * .36 * (.5 + min(seen * 2.0, vec3(.9))) + innerEdge * .42) * mix(vec3(1.0), uTint, .35);
     float a = uBody * (.55 + .45 * f) + wall * .18 * uWallGlow;
-    // TV static: coloured noise in 2px cells that changes 24 times a second, strongest under the pointer
-    vec2 sc = floor(gl_FragCoord.xy / 2.0); float stt = floor(uTime * 24.0);
-    vec3 sn = vec3(fract(sin(dot(sc + stt * 1.7, vec2(12.9898, 78.233))) * 43758.5453), fract(sin(dot(sc + stt * 2.3 + 7.0, vec2(39.346, 11.135))) * 43758.5453), fract(sin(dot(sc + stt * 3.1 + 13.0, vec2(73.156, 52.235))) * 43758.5453));
-    light += sn * gf * .75 * vec3(.85, .95, 1.1) + gband * (sn.r - .3) * .5;
-    vec3 col = body * a * (1.0 - gf * .65 * sn.g) + light;
+    vec3 col = body * a + light;
     gl_FragColor = vec4(col, clamp(a + dot(light, vec3(.3)) * .6, 0.0, 1.0)) * uFade;
   }`;
 const GU = Object.assign({}, U, {
@@ -499,6 +495,7 @@ function ballPose(o, px, py, rPx, unit) {
 /* ---------------------------------------------------------------- how it works: one more node per card */
 const about = document.querySelector('#about'), howSec = document.querySelector('.how'), cards = $$('.card');
 const slot = document.querySelector('.mark-slot');
+const faqSec = document.querySelector('.faq-sec'), callSec = document.querySelector('#call');
 // the shape at f (0 the first card … 4 the last): whole numbers hold a shape; between them the shape bursts open, turns
 // and the new nodes split off the old ones, so each card arrives with one more stage of the system
 function howPose(o, f, unit, time, cx, cy) {
@@ -581,6 +578,37 @@ function squarePose(o, unit, time) {
   LAT.forEach((v, i) => { if (v.z !== 0) { o.P[i * 3 + 2] = 0; } });
   o.D.fill(0); SQ_RODS.forEach(i => { o.D[i] = 1; }); DIAG.forEach(i => { o.D[i] = 1; });
   o.q.copy(Q_ID); o.w = .7; o.lines = 0; o.fade = 1; o.lean = 0; o.tilt = 1;
+}
+
+/* ---------------------------------------------------------------- the closing (owner, 2026-10-18): from Questions to the footer */
+// a huge, thick-walled sphere rises from below the screen and settles, then drifts up while it shrinks to a node and runs through
+// the shapes (pair, triangle, tetrahedron, octahedron), becomes the N, turns into the H, and lands behind the call as the N / H
+// ambigram, slowly turning between the two
+let closeWall = 1;
+function nhPose(o, a, unit, cx, cy, spacePx, time) {
+  const h = io(seg(a, 70, 20));
+  setLat(o, 1, 1, 1); o.Z.fill(0); o.D.fill(0);
+  for (let i = 0; i < 27; i++) o.Z[i] = IS_STROKE[i] ? nodeMask(i, h) : 0;
+  AMB_ROD.forEach((rs, k) => rs.forEach(r => { o.D[r] = letterMask(k, h); }));
+  const w = toWorld(cx, cy); o.x = w.x; o.y = w.y; o.S = spacePx / unit;
+  o.q.copy(qa(Y, a)).premultiply(qa(X, Math.sin(time * .4) * 7 - 4));
+  o.w = 1; o.lines = 0; o.fade = 1; o.lean = .5; o.tilt = 0;
+}
+function closingPose(o, u, unit, time) {
+  const cx = innerWidth / 2, ih = innerHeight, cy = ih * .5, sp = Math.min(innerWidth, ih) * (innerWidth < 900 ? .22 : .24);
+  const rBig = ih * (innerWidth < 900 ? .62 : .8), r0 = .62 * sp;
+  const rise = o3(seg(u, 0, .14)), settle = io(seg(u, .14, .34));
+  closeWall = lerp(1, .42, 1 - settle);                                   // the big sphere keeps the thick wall; it thins as it shrinks to the node's size
+  if (u < .34) {
+    const bigY = lerp(lerp(ih + rBig * 1.08, ih + rBig * .375, rise), cy, settle);
+    ballPose(o, cx, bigY, lerp(rBig, r0, settle), unit); return;
+  }
+  if (u < .62) { howPose(o, 4 * io(seg(u, .34, .62)), unit, time, cx, cy); return; }
+  const aSeq = 90 * (1 - io(seg(u, .74, .82))), aOsc = 45 + 45 * Math.cos(time * .5), a = lerp(aSeq, aOsc, io(seg(u, .84, .92)));
+  const size = lerp(sp * 1.05, Math.min(ih * .27, innerWidth * .3), io(seg(u, .82, 1)));
+  nhPose(A, a, unit, cx, cy, size, time);
+  if (u < .74) { howPose(C, 4, unit, time, cx, cy); mixPose(o, C, A, io(seg(u, .62, .74))); return; }
+  mixPose(o, A, A, 0);
 }
 
 /* ---------------------------------------------------------------- the lights: rigs in the world */
@@ -695,10 +723,15 @@ function frame(time) {
         mixPose(TMP, A, B, k1);
         mixPose(OUT, TMP, C, k2);
       } else {
+        const fq = faqSec.getBoundingClientRect(), cl = callSec.getBoundingClientRect();
+        const cu = clamp((ih * .95 - fq.top) / (fq.height + ih * .95 + (cl.height - ih) * .35));       // 0 before Questions, 1 once the call is half read
+        if (cu > 0) { which = 'closing'; lockGoal = 0; closingPose(OUT, cu, unit, time); wallGoal = closeWall; }
+        else {
         which = 'slot'; lockGoal = 1;
         squarePose(OUT, unit, time);
         OUT.fade = clamp((sr.bottom + sr.height * .2) / (sr.height * .6));      // leaves with its section
         if (sr.bottom < -sr.height * .2) visible = false;
+        }
       }
     }
   }
