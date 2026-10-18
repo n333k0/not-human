@@ -568,7 +568,7 @@ function setOrb(o, shape) {
 }
 
 /* ---------------------------------------------------------------- one loop */
-let which = 'hero', lastTargets = null, lockFlat = 0, lockGoal = 0;
+let which = 'hero', lastTargets = null, lockFlat = 0, lockGoal = 0, wallK = 1, wallT = 0;
 const orbFx = { x: .5, y: .5, s: 1 };
 function frame(time) {
   ptr.x += (ptr.tx - ptr.x) * (reduced ? 1 : .07); ptr.y += (ptr.ty - ptr.y) * (reduced ? 1 : .07);
@@ -651,6 +651,10 @@ function frame(time) {
   { const c = gl.outer.position.clone().project(cam), r = Math.max(.04, OUT.S * 1.7 / (2 * Math.tan(THREE.MathUtils.degToRad(cam.fov / 2)) * cam.position.z));
     U.uHalo.value.set((c.x + 1) / 2, (c.y + 1) / 2, r, (SHADOWS[G.shadow] || SHADOWS.off).halo * OUT.fade); }
   placeLights();
+  // v10: the thick wall stays on nodes and tubes, but the About lens goes back to v9's thin glass (owner, 2026-10-18)
+  wallK += ((which === 'about' ? 0 : 1) - wallK) * (reduced ? 1 : 1 - Math.exp(-Math.min(.25, Math.max(0, time - wallT)) * 6));
+  wallT = time;
+  for (const m of gl.mats) m.uniforms.uWall.value = G.wall * wallK;
   gl.render();
   // the hero's corner marks follow some of the letter's nodes
   if (which === 'hero' && targetsOn) {
