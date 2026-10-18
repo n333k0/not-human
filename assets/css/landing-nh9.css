@@ -97,3 +97,7 @@ html.v9 .sys::after { content: ""; position: absolute; inset: 0; pointer-events:
     radial-gradient(70% 60% at var(--gx, 50%) var(--gy, 50%), rgba(200, 195, 255, .08), rgba(0, 0, 0, 0) 70%); }
 html.v9 .sys.hot::after { opacity: 1; }
 html.v9 .sys.hot { box-shadow: inset 0 0 0 1px rgba(255, 255, 255, .2); }
+
+/* the page grain: its noise tile is drawn in CSS pixels, so dense screens get it at a finer scale (owner: too rough on phones) */
+@media (min-resolution: 2dppx) { html.v9 .grain { background-size: 90px 90px; } }
+@media (min-resolution: 3dppx) { html.v9 .grain { background-size: 60px 60px; } }

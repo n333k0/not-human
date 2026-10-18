@@ -47,13 +47,14 @@ const ROOMS = {
   mono:   { leak: 0, ring: 0, aura: 0, cols: [[0, 0, 0], [0, 0, 0], [0, 0, 0]] },
 };
 // still grain only: the page overlay, the room, and the glass each get their own amount
-const GRAINS = { off: { css: 0, bg: 0, grain: 0 }, fine: { css: .045, bg: .012, grain: .03 }, film: { css: .13, bg: .05, grain: .075 } };
+// v9 (owner, 2026-10-18): half as strong as v8's
+const GRAINS = { off: { css: 0, bg: 0, grain: 0 }, fine: { css: .022, bg: .006, grain: .015 }, film: { css: .065, bg: .025, grain: .035 } };
 const LCOLS = { white: [1, 1, 1.04], lavender: [.86, .8, 1.12], teal: [.68, 1, 1.04], rose: [1.12, .76, .9] };
 const SHADOWS = { off: { vig: 0, halo: 0 }, vignette: { vig: .55, halo: 0 }, halo: { vig: .45, halo: .65 } };
 // the owner's values (in chat, 2026-10-18), plus v9's two new knobs: cursor (the lights that follow the mouse) and rim (how
 // strongly the orb keeps to the shape's edge)
 const DEF = Object.assign({}, LOOKS.soft, { look: 'soft', form: 'sphere', lights: 'backlit', lightCol: 'lavender', room: 'night', grainMode: 'film', shadow: 'halo', layer: 'auto',
-  orb: 1, orbSize: .16, ring: .6, aura: .6, leak: 0, grain: .03, cursor: .6, orbRim: .75 });   // the owner's values, 2026-10-18 (late)
+  orb: 1, orbSize: .16, ring: .6, aura: .6, leak: 0, grain: .015, cursor: .6, orbRim: .75 });   // the owner's values, 2026-10-18 (late)
 // saved panel values count only while the panel is shown (?panel): everyone else sees the defaults
 const G = Object.assign({}, DEF, (() => { try { return root.classList.contains('show-panel') ? JSON.parse(localStorage.getItem('nh9') || '{}') : {}; } catch (e) { return {}; } })());
 // light rigs, in world units (the camera sits at z ≈ 6.6 looking at the origin). orb: placed under the pointer's light,
@@ -678,7 +679,8 @@ function applySettings() {
   const c = gl.compMat.uniforms; c.uSoft.value = +G.soft; c.uBloom.value = +G.bloom; c.uCA.value = +G.ca; c.uGrain.value = +G.grain;
   gl.setForm(G.form);
   const R = ROOMS[G.room] || ROOMS.night; U.uLA.value.set(...R.cols[0]); U.uLB.value.set(...R.cols[1]); U.uLC2.value.set(...R.cols[2]);
-  const gm = GRAINS[G.grainMode] || GRAINS.fine; U.uGrainBg.value = gm.bg; root.style.setProperty('--grain', gm.css);
+  // the room is drawn at half size, so on dense screens its grain would read as coarse dots: leave it to the page overlay there
+  const gm = GRAINS[G.grainMode] || GRAINS.fine; U.uGrainBg.value = (devicePixelRatio || 1) > 1.5 ? 0 : gm.bg; root.style.setProperty('--grain', gm.css);
   U.uVig.value = (SHADOWS[G.shadow] || SHADOWS.off).vig;
   U.uLCol.value.set(...(LCOLS[G.lightCol] || LCOLS.white));
   setLayer();
