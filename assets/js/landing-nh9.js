@@ -47,14 +47,14 @@ const ROOMS = {
   mono:   { leak: 0, ring: 0, aura: 0, cols: [[0, 0, 0], [0, 0, 0], [0, 0, 0]] },
 };
 // still grain only: the page overlay, the room, and the glass each get their own amount
-// v9 (owner, 2026-10-18): half as strong as v8's
-const GRAINS = { off: { css: 0, bg: 0, grain: 0 }, fine: { css: .022, bg: .006, grain: .015 }, film: { css: .065, bg: .025, grain: .035 } };
+// v9 (owner, 2026-10-18): half as strong as v8's, then 20% back up
+const GRAINS = { off: { css: 0, bg: 0, grain: 0 }, fine: { css: .026, bg: .007, grain: .018 }, film: { css: .078, bg: .03, grain: .042 } };
 const LCOLS = { white: [1, 1, 1.04], lavender: [.86, .8, 1.12], teal: [.68, 1, 1.04], rose: [1.12, .76, .9] };
 const SHADOWS = { off: { vig: 0, halo: 0 }, vignette: { vig: .55, halo: 0 }, halo: { vig: .45, halo: .65 } };
 // the owner's values (in chat, 2026-10-18), plus v9's two new knobs: cursor (the lights that follow the mouse) and rim (how
 // strongly the orb keeps to the shape's edge)
 const DEF = Object.assign({}, LOOKS.soft, { look: 'soft', form: 'sphere', lights: 'backlit', lightCol: 'lavender', room: 'night', grainMode: 'film', shadow: 'halo', layer: 'auto',
-  orb: 1, orbSize: .16, ring: .6, aura: .6, leak: 0, grain: .015, cursor: .6, orbRim: .75 });   // the owner's values, 2026-10-18 (late)
+  orb: 1, orbSize: .16, ring: .6, aura: .6, leak: 0, grain: .018, cursor: .6, orbRim: .75 });   // the owner's values, 2026-10-18 (late)
 // saved panel values count only while the panel is shown (?panel): everyone else sees the defaults
 const G = Object.assign({}, DEF, (() => { try { return root.classList.contains('show-panel') ? JSON.parse(localStorage.getItem('nh9') || '{}') : {}; } catch (e) { return {}; } })());
 // light rigs, in world units (the camera sits at z ≈ 6.6 looking at the origin). orb: placed under the pointer's light,
