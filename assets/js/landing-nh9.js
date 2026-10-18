@@ -664,7 +664,7 @@ function setOrb(o, shape) {
 }
 
 /* ---------------------------------------------------------------- one loop */
-let which = 'hero', lastTargets = null, lockFlat = 0, lockGoal = 0, wallGoal = 1;
+let which = 'hero', lastTargets = null, lockFlat = 0, lockGoal = 0, wallGoal = 1, k1T = 0, k1S = 0, k1Time = 0;
 const orbFx = { x: .5, y: .5, s: 1 }, glitchP = { x: -1e4, y: -1e4, v: 0, on: 0 };
 function frame(time) {
   ptr.x += (ptr.tx - ptr.x) * (reduced ? 1 : .07); ptr.y += (ptr.ty - ptr.y) * (reduced ? 1 : .07);
@@ -697,6 +697,9 @@ function frame(time) {
     GU.uGlitch.value = reduced ? 0 : seg(heroOpen, .12, .55) * glitchP.on * (.55 + .45 * glitchP.v);
     GU.uPtr.value.set(ptr.px / innerWidth, 1 - ptr.py / ih);
   }
+  // the ball becoming the About lens: on phones it follows the scroll with a little inertia, so it eases in whatever the scroll distance
+  k1S += (k1T - k1S) * (innerWidth < 900 && !reduced ? 1 - Math.exp(-Math.min(.1, Math.max(0, time - k1Time)) * 3.5) : 1); k1Time = time;
+  let k1Next = hr.bottom > ih + 1 ? 0 : 1;
   lockGoal = 0; wallGoal = 1 - (hr.bottom > ih + 1 ? .3 * heroOpen : 0);   // the opening sphere is 2.1x bigger, so its wall is thinner to read as thick as the old start
   if (hr.bottom <= ih + 1) {
     const unit = ppu(); heroPose(A, 1);
@@ -711,9 +714,9 @@ function frame(time) {
       ballPose(B, innerWidth / 2 + Math.sin(b * Math.PI) * innerWidth * .04, ih * .5, big, unit);
       B.q.copy(qa(Y, b * 60)); B.lean = .6;
       howPose(C, 0, unit, time, hx, Math.min(hy, ih * .9));
-      const k1 = io(seg(b, 0, innerWidth < 900 ? .12 : .28)), k2 = io(seg(b, .58, 1));      // owner 2026-10-18: the descent starts earlier and runs longer
-      wallGoal = 1 - k1 * (1 - io(seg(b, .5, .72)));            // thin while it reads as a lens, thick again before it descends far
-      mixPose(TMP, A, B, k1);
+      const k1 = io(seg(b, 0, innerWidth < 900 ? .12 : .28)), k2 = io(seg(b, .58, 1)); k1Next = k1;      // owner 2026-10-18: the descent starts earlier and runs longer
+      wallGoal = 1 - k1S * (1 - io(seg(b, .5, .72)));            // thin while it reads as a lens, thick again before it descends far
+      mixPose(TMP, A, B, k1S);
       mixPose(OUT, TMP, C, k2);
     } else if (hw.bottom > ih) {
       which = 'how';
@@ -743,6 +746,7 @@ function frame(time) {
       }
     }
   }
+  k1T = k1Next;
   setLayer();
   lockFlat += (lockGoal - lockFlat) * (reduced ? 1 : .12);
   if (!visible) { gl.clear(); hideTargets(); setOrb(o, null); if (bg) bg.r.render(bg.s, bg.c); return; }
