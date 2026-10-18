@@ -599,7 +599,7 @@ function frame(time) {
   if (cam.fov !== fov) { cam.fov = fov; cam.updateProjectionMatrix(); }
   const lean = 1 - flat;
   cam.position.set(ptr.x * .5 * lean, -ptr.y * .35 * lean, camZ * narrow * zoomK); cam.lookAt(0, 0, 0); cam.updateMatrixWorld();
-  lockGoal = 0; wallGoal = 1 + (hr.bottom > ih + 1 ? .6 * heroOpen : 0);   // the opening sphere has the thickest wall
+  lockGoal = 0; wallGoal = 1 - (hr.bottom > ih + 1 ? .45 * heroOpen : 0);   // the opening sphere is 2.1x bigger, so its wall is thinner to read as thick as the old start
   if (hr.bottom <= ih + 1) {
     const unit = ppu(); heroPose(A, 1);
     const ar = about.getBoundingClientRect(), hw = howSec.getBoundingClientRect();
