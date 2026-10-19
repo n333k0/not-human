@@ -159,3 +159,42 @@ html.v10 body .cs3 {
 html.v10 body .cs-audit__side,
 html.v10 body .cs3__art { background-color: #0C0C12; }
 html.v10 body .cs3[data-turn]::after { display: none; }
+
+/* Mobile opening: description in the middle, full-width actions at the bottom,
+   with 24px of clear space before the 54px scroll cue. Desktop is unchanged. */
+@media (max-width: 899px) {
+  html.v10 .intro {
+    top: 0; bottom: 0; left: 16px; right: 16px; width: auto;
+    transform: translateY(calc(0px - var(--iy, 0px)));
+    padding: calc(90px + env(safe-area-inset-top, 0px)) 0 calc(100px + env(safe-area-inset-bottom, 0px));
+    grid-template-rows: minmax(min-content, 1fr) auto minmax(min-content, 1fr);
+    gap: 24px;
+  }
+  html.v10 .intro-t { align-self: end; margin: 0; }
+  html.v10 .intro-d { align-self: center; justify-self: center; text-align: center; }
+  html.v10 .intro .hero-ctas {
+    align-self: end; width: 100%; margin: 0;
+    flex-direction: column; flex-wrap: nowrap; align-items: stretch; gap: 10px;
+  }
+  html.v10 .intro .hero-ctas > .cta,
+  html.v10 .intro .hero-ctas > .ts-out {
+    width: 100%; min-height: 48px; justify-content: center;
+  }
+  html.v10 .scroll-cue { bottom: calc(22px + env(safe-area-inset-bottom, 0px)); }
+}
+/* Compact phones keep every control above the cue, without hiding any copy. */
+@media (max-width: 899px) and (max-height: 740px) {
+  html.v10 .intro { padding-top: calc(82px + env(safe-area-inset-top, 0px)); gap: 16px; }
+  html.v10 .intro-t { font-size: clamp(28px, 8vw, 38px); }
+  html.v10 .intro-d { font-size: 14px; line-height: 1.4; }
+}
+@media (max-width: 899px) and (max-height: 600px) {
+  html.v10 .intro { padding-top: calc(78px + env(safe-area-inset-top, 0px)); padding-bottom: calc(84px + env(safe-area-inset-bottom, 0px)); gap: 12px; }
+  html.v10 .intro-t { font-size: 28px; }
+  html.v10 .intro-d { font-size: 13px; line-height: 1.4; }
+  html.v10 .intro .hero-ctas { gap: 8px; }
+  html.v10 .intro .hero-ctas > .cta,
+  html.v10 .intro .hero-ctas > .ts-out { min-height: 44px; padding-block: 12px; }
+  html.v10 .scroll-cue { bottom: calc(18px + env(safe-area-inset-bottom, 0px)); }
+  html.v10 .scroll-cue i { height: 42px; }
+}
