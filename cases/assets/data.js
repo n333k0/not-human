@@ -62,7 +62,28 @@ NHC.cases = [
   title: 'A studio that bills the same day, with a person signing every invoice.',
   kicker: 'Finance · Brand and web studio · 24 people',
   card: { metric: 'Work done to invoice sent', before: '9 days', after: 'Same day', b: 1, a: .06, line: 'Invoices drafted from time and milestones, approved in one click.' },
-  art: [[0, 4], [1, 4], [2, 3], [2, 2], [3, 2], [4, 1], [5, 1], [6, 0]],
+  art: {
+    label: 'Finance workflow: time, milestones and contract terms join in an invoice draft. An account lead can return it for revision before approval and sending. Payments and collections feed the cash forecast. Rings mark human review.',
+    duration: 18,
+    nodes: [
+      ['time', 1, 0, 'Harvest time'], ['milestone', 3, 0, 'ClickUp milestones'], ['terms', 5, 0, 'Contract terms'],
+      ['draft', 3, 1, 'Draft invoice in Xero'], ['approve', 3, 2, 'Account lead approves', true],
+      ['revise', 5, 2, 'Requested corrections'], ['send', 3, 3, 'Approved invoice sent'],
+      ['overdue', 1, 4, 'Collections: first reminder'], ['paid', 5, 4, 'Payment received'],
+      ['review', 1, 5, 'Later reminders approved', true], ['ledger', 5, 5, 'Receipt matching'],
+      ['cash', 3, 6, 'Monday cash forecast'],
+    ],
+    // [from, to, start second, travel seconds, optional bend points]. One shared clock;
+    // the revision returns to drafting, then review resumes before anything is sent.
+    edges: [
+      ['time', 'draft', 0, 1.4], ['milestone', 'draft', 0, 1.4], ['terms', 'draft', 0, 1.4],
+      ['draft', 'approve', 1.8, 1], ['approve', 'revise', 3.5, .9],
+      ['revise', 'draft', 4.8, 1.2, [[5, 1]]], ['draft', 'approve', 6.4, 1],
+      ['approve', 'send', 8.3, 1], ['send', 'overdue', 9.7, 1.3], ['send', 'paid', 9.7, 1.3],
+      ['overdue', 'review', 11.5, 1], ['paid', 'ledger', 11.5, 1],
+      ['review', 'cash', 13.8, 1.5], ['ledger', 'cash', 13.8, 1.5],
+    ],
+  },
   client: {
     name: 'Independent brand and web studio',
     facts: ['24 people', '40 active projects', 'Retainers and fixed fees', 'Two time zones'],
@@ -182,7 +203,26 @@ NHC.cases = [
   title: 'Every lead answered in five minutes, and every call remembered.',
   kicker: 'Sales · Performance marketing agency · 38 people',
   card: { metric: 'First reply to a new lead', before: '31 hours', after: '5 minutes', b: 1, a: .04, line: 'Leads answered fast, calls written into the team’s memory.' },
-  art: [[0, 3], [1, 3], [2, 2], [3, 3], [4, 1], [5, 2], [6, 1]],
+  art: {
+    label: 'Sales workflow: form, email and WhatsApp leads join in qualification. Poor-fit replies wait for review; qualified leads go to a human call. Meeting memory updates the CRM and a proposal draft. Approved follow-ups loop back before signature and delivery handoff. Rings mark human review.',
+    duration: 20,
+    nodes: [
+      ['form', 1, 0, 'Website form'], ['email', 3, 0, 'Email lead'], ['chat', 5, 0, 'WhatsApp lead'],
+      ['qualify', 3, 1, 'Research, qualify and reply'], ['poor', 1, 2, 'Poor-fit reply reviewed', true],
+      ['call', 3, 2, 'Salesperson runs the call', true], ['memory', 3, 3, 'Call summary in the second brain'],
+      ['crm', 1, 4, 'CRM stage, budget and next step'], ['proposal', 3, 4, 'Proposal edited, priced and sent', true],
+      ['follow', 5, 4, 'Follow-up approved', true], ['signed', 3, 5, 'Contract signed'],
+      ['handoff', 3, 6, 'Delivery lead reviews kickoff pack', true],
+    ],
+    edges: [
+      ['form', 'qualify', 0, 1.4], ['email', 'qualify', 0, 1.4], ['chat', 'qualify', 0, 1.4],
+      ['qualify', 'poor', 1.9, 1], ['qualify', 'call', 1.9, 1], ['call', 'memory', 3.8, 1.1],
+      ['memory', 'crm', 5.3, 1.2], ['memory', 'proposal', 5.3, 1.2],
+      ['proposal', 'follow', 7.6, 1], ['follow', 'memory', 9.6, 1.6, [[6, 4], [6, 3]]],
+      ['memory', 'proposal', 11.7, 1], ['proposal', 'signed', 13.8, 1.1],
+      ['signed', 'handoff', 15.5, 1.4],
+    ],
+  },
   client: {
     name: 'Performance marketing agency',
     facts: ['38 people', 'Paid social and search', 'E-commerce brands', '~25 new leads a week'],

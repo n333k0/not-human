@@ -52,8 +52,43 @@
     return `<svg class="dot-ic" viewBox="0 0 50 50" width="${size}" height="${size}"${label}>${grid(5, p, .9, o)}<path class="trace" d="${d}"/>${nodes}${run}</svg>`;
   }
 
+  // Branching case workflows. Static diagram first; packets share one clock so they
+  // reach a review node, pause, then continue. The same SVG is used on every cover.
+  const escape = (value) => String(value).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[c]);
+  function workflow(def, opt) {
+    const duration = def.duration;
+    const nodes = new Map(def.nodes.map(n => [n[0], n]));
+    const xy = ([x, y]) => `${50 + x * 50} ${50 + y * 50}`;
+    const time = n => +(n / duration).toFixed(5);
+    const paths = new Set();
+    let lines = '', packets = '';
+    for (const [from, to, start, travel, bends = []] of def.edges) {
+      const a = nodes.get(from), b = nodes.get(to);
+      const path = 'M' + [a.slice(1, 3), ...bends, b.slice(1, 3)].map(xy).join(' L');
+      if (!paths.has(path)) {
+        paths.add(path);
+        lines += `<path class="trace" pathLength="1" d="${path}"/>`;
+      }
+      if (opt.run !== false) {
+        const end = start + travel;
+        const times = start === 0 ? `0;${time(end)};1` : `0;${time(start)};${time(end)};1`;
+        const points = start === 0 ? '0;1;1' : '0;0;1;1';
+        const fadeTimes = start === 0 ? `0;${time(end - .05)};${time(end)};1` : `0;${time(start)};${time(start + .05)};${time(end - .05)};${time(end)};1`;
+        const fades = start === 0 ? '1;1;0;0' : '0;0;1;1;0;0';
+        packets += `<circle class="runner" r="4" opacity="0"><animateMotion dur="${duration}s" repeatCount="indefinite" path="${path}" keyPoints="${points}" keyTimes="${times}" calcMode="linear"/><animate attributeName="opacity" dur="${duration}s" repeatCount="indefinite" values="${fades}" keyTimes="${fadeTimes}"/></circle>`;
+      }
+    }
+    const dots = def.nodes.map(([, x, y, label, human]) => {
+      const cx = 50 + x * 50, cy = 50 + y * 50;
+      const ring = human ? `<circle cx="${cx}" cy="${cy}" r="10" fill="none" stroke="currentColor" stroke-width="1.2" vector-effect="non-scaling-stroke" opacity=".75"/>` : '';
+      return `<g><title>${escape(label)}</title>${ring}<circle class="on" cx="${cx}" cy="${cy}" r="5"/></g>`;
+    }).join('');
+    return `<svg class="dot-art" viewBox="0 0 400 400" preserveAspectRatio="xMidYMid meet" role="img" aria-label="${escape(def.label)}">${grid(7, 50, 2.4, 50)}${lines}${dots}${packets}</svg>`;
+  }
+
   // the card art: a 7 x 7 field on a 50 pitch in a 400 box, a traced route, lit nodes, a runner (as the site's How cards)
   function art(points, opt = {}) {
+    if (!Array.isArray(points)) return workflow(points, opt);
     const P = points.map(([x, y]) => [50 + x * 50, 50 + y * 50]);
     const d = 'M' + P.map(([x, y]) => `${x} ${y}`).join(' L');
     const seen = new Set(), nodes = P.filter(([x, y]) => { const k = x + ',' + y; if (seen.has(k)) return false; seen.add(k); return true; })
