@@ -769,10 +769,13 @@ function frame(time) {
   // v10: Measure the leak. While the layer is open the object goes back to the opening sphere, in the middle, and breathes with the voice
   if (leakK > .001) {
     // where it sits and how big: landing-nh10.js aims it (NH_LEAKMODE.x, .y, .r in px) at the number, or between question and chips
-    const lm = window.NH_LEAKMODE || {}, tx = lm.x ?? innerWidth / 2, ty = lm.y ?? ih / 2, tr = lm.r ?? Math.min(innerWidth, ih) * .2;
+    // while she talks (NH_LEAKMODE.talk) it grows to about the screen's height, centred, the question and the number inside it
+    // (owner, 2026-10-18); when she stops it eases back to frame the number
+    const lm = window.NH_LEAKMODE || {}, big = Math.min(ih * .5, innerWidth * (innerWidth < 900 ? .62 : .48));
+    const tx = lm.talk ? innerWidth / 2 : lm.x ?? innerWidth / 2, ty = lm.talk ? ih / 2 : lm.y ?? ih / 2, tr = lm.talk ? big : lm.r ?? Math.min(innerWidth, ih) * .2;
     if (!lkT.set) { lkT.x = tx; lkT.y = ty; lkT.r = tr; lkT.set = true; }
-    const kk = reduced ? 1 : .07; lkT.x += (tx - lkT.x) * kk; lkT.y += (ty - lkT.y) * kk; lkT.r += (tr - lkT.r) * kk;
-    ballPose(LKP, lkT.x, lkT.y, lkT.r * (1 + (reduced ? 0 : Math.sin(time * .8) * .012 + voiceS * .08)), ppu());
+    const kk = reduced ? 1 : tr > lkT.r ? .07 : .04; lkT.x += (tx - lkT.x) * kk; lkT.y += (ty - lkT.y) * kk; lkT.r += (tr - lkT.r) * kk;
+    ballPose(LKP, lkT.x, lkT.y, lkT.r * (1 + (reduced ? 0 : Math.sin(time * .8) * .012 + voiceS * .09)), ppu());   // and it swells with every word
     LKP.lean = .45;
     // a crossfade, not a morph: the letters fade out, then the orb fades in and grows a touch (mixing them stacks 27 glass balls)
     if (!visible) { visible = true; OUT.fade = 0; }

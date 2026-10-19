@@ -41,7 +41,8 @@ const voice = (() => {
   const btn = $('.ob-voice');
   let on = localStorage.getItem('nh-voice') !== 'off', audio = null, synthVoice;
   let ctx = null, an = null, buf = null, src = null, mode = '', pulse = 0, raf = 0;
-  const talk = v => btn && btn.classList.toggle('talk', v);
+  // talking: the button's waves move, and the orb (landing-nh9.js) grows to fill the screen while she speaks
+  const talk = v => { if (btn) btn.classList.toggle('talk', v); window.NH_LEAKMODE.talk = !!v; };
   // loudness: read from the audio itself when it can be; for the browser voice, a pulse on every word
   function meter() {
     let lv = 0;
@@ -294,7 +295,7 @@ const leak = ob && (() => {
   const zoned = (y, m, d, h) => { const g = new Date(Date.UTC(y, m - 1, d, h)); const p = parts(g, cfg.tz); const off = Date.UTC(p.year, p.month - 1, p.day, p.hour, p.minute) - g.getTime(); return new Date(g.getTime() - off); };
 
   const today = parts(new Date(), cfg.tz), list = [];
-  for (let i = 1; list.length < 10 && i < 30; i++) {
+  for (let i = 1; list.length < 20 && i < 40; i++) {                  // four weeks of weekdays (owner: two more rows)
     const c = new Date(Date.UTC(today.year, today.month - 1, today.day + i));
     const wd = c.getUTCDay(); if (wd === 0 || wd === 6) continue;
     list.push({ y: c.getUTCFullYear(), m: c.getUTCMonth() + 1, d: c.getUTCDate(), date: c });
