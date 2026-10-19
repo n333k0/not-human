@@ -296,42 +296,6 @@ const leak = ob && (() => {
   addEventListener('resize', upd); upd();
 })();
 
-/* ================================================================ the audit box: fine lines that draw along its dot grid (owner, 2026-10-18) */
-(() => {
-  const side = $('.cs-audit__side'); if (!side) return;
-  const NS = 'http://www.w3.org/2000/svg', P = 46, O = 23;   // the grid of html.v10 body .cs-audit__side in cases-home.css
-  const el = (n, a) => { const e = document.createElementNS(NS, n); for (const k in a) e.setAttribute(k, a[k]); return e; };
-  let svg = null;
-  function build() {
-    svg?.remove();
-    const w = side.clientWidth, h = side.clientHeight; if (!w || !h) return;
-    const cols = Math.floor((w - O) / P), rows = Math.floor((h - O) / P);
-    svg = el('svg', { class: 'bg-lines', viewBox: `0 0 ${w} ${h}`, 'aria-hidden': 'true' });
-    let seed = 11; const rnd = () => (seed = seed * 16807 % 2147483647) / 2147483647;
-    for (let k = 0; k < 10; k++) {
-      let x = Math.floor(rnd() * (cols + 1)), y = Math.floor(rnd() * (rows + 1)), dir = rnd() < .5 ? 0 : 1; const pts = [[x, y]];
-      for (let s = 0, n = 3 + Math.floor(rnd() * 4); s < n; s++) {
-        const len = 1 + Math.floor(rnd() * 3), sg = rnd() < .5 ? -1 : 1;
-        if (dir === 0) x = Math.max(0, Math.min(cols, x + sg * len)); else y = Math.max(0, Math.min(rows, y + sg * len));
-        pts.push([x, y]); dir = 1 - dir;
-      }
-      const d = 'M' + pts.map(([a, b]) => `${O + a * P} ${O + b * P}`).join(' L'), t = (7 + rnd() * 5).toFixed(1), dl = (k * .85).toFixed(2);
-      const st = `--t:${t}s;--d:${dl}s`;
-      svg.append(el('path', { d, pathLength: 1, style: st }));
-      const [a0, b0] = pts[0], [a1, b1] = pts[pts.length - 1];
-      svg.append(el('circle', { class: 'n', cx: O + a0 * P, cy: O + b0 * P, r: 2.6, style: st }), el('circle', { class: 'n', cx: O + a1 * P, cy: O + b1 * P, r: 2.6, style: st }));
-      if (!reduced) {
-        const r = el('circle', { class: 'r', r: 1.8 });
-        r.append(el('animateMotion', { dur: `${t}s`, begin: `${dl}s`, repeatCount: 'indefinite', keyPoints: '0;1;1', keyTimes: '0;.45;1', calcMode: 'linear', path: d }),
-          el('animate', { attributeName: 'opacity', values: '0;1;1;0;0', keyTimes: '0;.05;.42;.5;1', dur: `${t}s`, begin: `${dl}s`, repeatCount: 'indefinite' }));
-        svg.append(r);
-      }
-    }
-    side.prepend(svg);
-  }
-  build(); let tm = 0; addEventListener('resize', () => { clearTimeout(tm); tm = setTimeout(build, 200); });
-})();
-
 /* ================================================================ the booking card */
 (() => {
   const card = $('.book-card'); if (!card) return;
