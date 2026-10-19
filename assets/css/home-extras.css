@@ -147,3 +147,15 @@ html.v10 .cs3 .sym .runner { fill: #F3F2F7; }   /* retain the owner's white, non
   html.v10 .cs3 .sym .runner { display: none; }
 }
 html.v10 .cs3 .sym { overflow: visible; }   /* the grid dots run out to the thumbnail's edges (owner, 2026-10-18) */
+
+/* Owner: case studies are opaque, not windows onto the pointer-lit room.
+   Keep the grid, illustrations and card tilt; remove only light transmission and sheen. */
+html.v10 body .cs-audit,
+html.v10 body .cs3 {
+  background-color: #0C0C12;
+  -webkit-backdrop-filter: none;
+  backdrop-filter: none;
+}
+html.v10 body .cs-audit__side,
+html.v10 body .cs3__art { background-color: #0C0C12; }
+html.v10 body .cs3[data-turn]::after { display: none; }
