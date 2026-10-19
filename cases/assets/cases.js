@@ -108,7 +108,7 @@
   ${sec('Words we used', 'A short glossary', `<dl class="gloss">${D.glossary.map(([t, d]) => `<div data-rise><dt>${esc(t)}</dt><dd>${esc(d)}</dd></div>`).join('')}</dl>`)}
 
   <section class="close"><div><p class="mono">See it working</p><h2>Walk through the system, chapter by chapter.</h2></div>
-    <div class="close__btns"><a class="btn btn--solid" href="demo-${C.id}.html">Open the interactive demo ${AR}</a><a class="btn" href="audit-demo.html">See the audit report</a><a class="btn" href="index.html">All case studies</a></div></section>
+    <div class="close__btns"><a class="btn btn--solid" href="demo-${C.id}.html">Open the interactive demo ${AR}</a><a class="btn" href="audit-demo.html" target="_blank" rel="noopener noreferrer">See the audit report</a><a class="btn" href="index.html">All case studies</a></div></section>
 </main>
 <footer class="foot"><span>Not Human · a RemotoLabs company</span><span>${esc(D.note)}</span><span>© 2026</span></footer>`;
     arm();
@@ -301,12 +301,12 @@
     document.title = 'Case studies · Not Human';
     const depts = ['All', ...D.cases.map((c) => c.dept)];
     body.innerHTML = `
-<header class="bar"><a class="bar__brand" href="index.html">${mark()}Not Human</a><nav class="bar__nav"><a href="${HOME}">Not Human home</a><a href="audit-demo.html">The audit report</a><a href="#how">How every system runs</a><a class="btn" href="#cases">See the cases ${ARR}</a></nav></header>
+<header class="bar"><a class="bar__brand" href="index.html">${mark()}Not Human</a><nav class="bar__nav"><a href="${HOME}">Not Human home</a><a href="audit-demo.html" target="_blank" rel="noopener noreferrer">The audit report</a><a href="#how">How every system runs</a><a class="btn" href="#cases">See the cases ${ARR}</a></nav></header>
 <main>
   <section class="idx-hero"><div data-rise><span class="mono">Case studies · interactive demos</span><h1>What an agent system looks like inside an agency.</h1>
     <p>Three illustrative engagements, one per department. Each has a case study you can read in ten minutes and a demo you can click through, from the first audit to the numbers after.</p></div>
     <div data-rise class="idx-mark">${mark('', 1)}</div></section>
-  <a class="feat wrap" href="audit-demo.html" data-rise><div class="feat__in"><span class="mono">Start here · the audit demo</span><h2>Three weeks with a finance team, and what we found.</h2><p>What an audit delivers, told as a story: the days with the team, the findings and the plan, for an illustrative agency group. Dark, interactive, about five minutes.</p><span class="btn btn--solid">Open the audit demo ${AR}</span></div><div class="feat__art">${ART([[0, 3], [1, 3], [1, 2], [2, 2], [3, 1], [4, 2], [5, 1], [6, 1]])}</div></a>
+  <a class="feat wrap" href="audit-demo.html" data-rise target="_blank" rel="noopener noreferrer"><div class="feat__in"><span class="mono">Start here · the audit demo</span><h2>Three weeks with a finance team, and what we found.</h2><p>What an audit delivers, told as a story: the days with the team, the findings and the plan, for an illustrative agency group. Dark, interactive, about five minutes.</p><span class="btn btn--solid">Open the audit demo ${AR}</span></div><div class="feat__art">${ART([[0, 3], [1, 3], [1, 2], [2, 2], [3, 1], [4, 2], [5, 1], [6, 1]])}</div></a>
   <div class="filters" id="cases" role="toolbar" aria-label="Filter by department">${depts.map((d, i) => `<button class="chip" aria-pressed="${i === 0}" data-f="${d}">${d}</button>`).join('')}<span class="mono count" data-count>${D.cases.length} case studies</span></div>
   <section class="cards">${D.cases.map((c) => `<article class="ccard" data-dept="${c.dept}" data-rise><div class="ccard__art">${ART(c.art)}<div class="tags"><span class="tag">/${c.no} · ${esc(c.dept)}</span><span class="tag">Illustrative</span></div></div>
       <div class="ccard__body"><span class="mono">${esc(c.kicker)}</span><h2>${esc(c.title)}</h2>

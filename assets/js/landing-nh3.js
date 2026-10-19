@@ -49,7 +49,7 @@ $$('a[href^="#"]').forEach(a => a.addEventListener('click', e => {
 }));
 // another page: the veil comes up, then the browser goes
 $$('a[href$=".html"]').forEach(a => a.addEventListener('click', e => {
-  if (reduced || !veil || e.metaKey || e.ctrlKey) return;
+  if (reduced || !veil || e.metaKey || e.ctrlKey || e.shiftKey || (a.target && a.target !== '_self')) return;
   e.preventDefault(); cover().then(() => { location.href = a.href; });
 }));
 addEventListener('pageshow', e => { if (e.persisted && veil) gsap.set(veil, { clipPath: 'inset(0% 0% 100% 0%)' }); });
