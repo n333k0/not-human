@@ -148,7 +148,7 @@ const GLASS_VERT = /* glsl */`
     gl_Position = projectionMatrix * viewMatrix * w;
   }`;
 const GLASS_FRAG = ROOM + /* glsl */`
-  uniform mat4 uProj; uniform vec2 uBuf; uniform vec2 uPtr; uniform float uGlitch;
+  uniform mat4 uProj; uniform vec2 uBuf; uniform vec2 uPtr; uniform float uGlitch, uVoice, uFlow;
   uniform float uRod, uGeoR, uRefract, uDisperse, uBody, uRim, uRimPow, uSpec, uFade, uWall, uWallGlow;
   uniform vec3 uTint; uniform vec3 uLP[3]; uniform vec3 uLC[3]; uniform float uLS[3];
   varying vec3 vN; varying vec3 vW; varying vec3 vA; varying float vRad; varying vec3 vL;
@@ -164,12 +164,20 @@ const GLASS_FRAG = ROOM + /* glsl */`
         dot(vP - vec3(0.0, vC2.w, 0.0), vC2.xyz) < -1e-5 || dot(vP - vec3(0.0, vC3.w, 0.0), vC3.xyz) < -1e-5) discard;
     #endif
     vec3 N = normalize(vN), V = normalize(cameraPosition - vW);
-    // v10 opening: under the pointer the glass tears into horizontal slices that jump, wobble and split their colours
-    vec2 suv = toUv(vW), dq = (suv - uPtr) * vec2(uBuf.x / uBuf.y, 1.0);
-    float gf = uGlitch * smoothstep(.62, .0, length(dq));
-    float grow = floor(suv.y * 46.0 + floor(uTime * 12.0) * 13.0), gh = fract(sin(grow * 78.233) * 43758.5453);
-    float gband = step(.68, gh) * gf;
-    N = normalize(N + vec3((gh - .5) * gband * 1.8 + sin(suv.y * 70.0 + uTime * 10.0) * .4 * gf, cos(suv.x * 55.0 - uTime * 8.0) * .4 * gf, 0.0));
+    // v10 opening (owner, 2026-10-18, second pass): no more tears. Under the pointer, and while the voice speaks, the glass flows like
+    // smoke behind a lens: a slow, domain-warped field bends the surface and splits the colours a touch more. uFlow keeps it
+    // breathing while the leak layer is open; uVoice is the voice's loudness, so the orb moves as she talks.
+    vec2 asp2 = vec2(uBuf.x / uBuf.y, 1.0), suv = toUv(vW), dq = (suv - uPtr) * asp2;
+    float gf = uGlitch * smoothstep(.6, .0, length(dq));
+    float fl = gf + uFlow + uVoice;
+    if (fl > .001) {
+      vec2 fp = (suv - .5) * asp2 * 2.4;
+      float tt = uTime * (.32 + uVoice * .8);
+      vec2 w1 = vec2(sin(fp.y * 1.9 + tt * 1.1), cos(fp.x * 1.6 - tt * .9));
+      vec2 w2 = vec2(sin((fp.y + w1.x * .8) * 2.7 - tt * 1.4), cos((fp.x + w1.y * .8) * 2.4 + tt * 1.2));
+      vec2 w3 = vec2(sin((fp.x + w2.y) * 4.3 + tt * 1.9), cos((fp.y + w2.x) * 3.9 - tt * 1.7)) * .35;
+      N = normalize(N + vec3((w2 + w3) * fl * .3, 0.0));
+    }
     float ndv = clamp(dot(N, V), 0.0, 1.0);
     // a rod's end cap: shade it as a disc with a lit rim, so you can see where the tube stops
     float cap = uRod > .5 ? step(.7, abs(dot(N, vA))) : 0.0;
@@ -183,7 +191,7 @@ const GLASS_FRAG = ROOM + /* glsl */`
     float ri = 1.0 - uWall, on = step(.001, uWall);
     float wall = on * smoothstep(ri - .05, ri + .03, rho);
     float th = vRad * uRefract * 4.0 * (1.0 + wall * 1.6);
-    vec3 rr = refract(-V, N, 1.0 / (1.45 - uDisperse * (1.0 + gf * 9.0))), rg = refract(-V, N, 1.0 / 1.45), rb = refract(-V, N, 1.0 / (1.45 + uDisperse * (1.0 + gf * 9.0)));
+    vec3 rr = refract(-V, N, 1.0 / (1.45 - uDisperse * (1.0 + fl * 3.0))), rg = refract(-V, N, 1.0 / 1.45), rb = refract(-V, N, 1.0 / (1.45 + uDisperse * (1.0 + fl * 3.0)));
     vec3 seen = vec3(room(toUv(vW + rr * th)).r, room(toUv(vW + rg * th)).g, room(toUv(vW + rb * th)).b);
     vec3 body = seen * mix(vec3(1.0), uTint, .4) * 1.1;
     // the lights live in the world: a soft source gives a broad, dim lobe; a small one a sharp, bright one
@@ -202,12 +210,15 @@ const GLASS_FRAG = ROOM + /* glsl */`
     light += pow(f, uRimPow) * uRim * (.35 + min(seen * 2.5, vec3(.8))) * mix(vec3(1.0), uTint, .3);
     vec3 innerEdge = vec3(exp(-pow((rho - ri * 1.012) / .045, 2.0)), exp(-pow((rho - ri) / .045, 2.0)), exp(-pow((rho - ri * .988) / .045, 2.0)));
     light += on * uWallGlow * (wall * .36 * (.5 + min(seen * 2.0, vec3(.9))) + innerEdge * .42) * mix(vec3(1.0), uTint, .35);
+    // the voice: an eclipse. The core dims a little and the rim lights up as a soft corona, louder words brighter
+    light += pow(f, uRimPow * .65) * uVoice * .6 * mix(vec3(1.0), uTint, .5);
+    body *= 1.0 - uVoice * .3 * ndv;
     float a = uBody * (.55 + .45 * f) + wall * .18 * uWallGlow;
     vec3 col = body * a + light;
     gl_FragColor = vec4(col, clamp(a + dot(light, vec3(.3)) * .6, 0.0, 1.0)) * uFade;
   }`;
 const GU = Object.assign({}, U, {
-  uPtr: { value: new THREE.Vector2(-9, -9) }, uGlitch: { value: 0 },
+  uPtr: { value: new THREE.Vector2(-9, -9) }, uGlitch: { value: 0 }, uVoice: { value: 0 }, uFlow: { value: 0 },
   uProj: { value: new THREE.Matrix4() }, uBuf: { value: new THREE.Vector2(1, 1) },
   uRefract: { value: G.refract }, uDisperse: { value: G.disperse }, uBody: { value: G.body }, uRim: { value: G.rim }, uRimPow: { value: G.rimPow },
   uSpec: { value: G.spec }, uFade: { value: 1 }, uWall: { value: G.wall }, uWallGlow: { value: G.wallGlow }, uTint: { value: new THREE.Color(G.tint) },
@@ -666,7 +677,13 @@ function setOrb(o, shape) {
 /* ---------------------------------------------------------------- one loop */
 let which = 'hero', lastTargets = null, lockFlat = 0, lockGoal = 0, wallGoal = 1, k1T = 0, k1S = 0, k1Time = 0;
 const orbFx = { x: .5, y: .5, s: 1 }, glitchP = { x: -1e4, y: -1e4, v: 0, on: 0 };
+// v10 "Measure the leak" (landing-nh10.js sets window.NH_LEAKMODE.on and window.NH_VOICE.level): leakK eases the object into the
+// opening sphere while the layer is open; voiceS is the voice's loudness, smoothed. Both stay 0 on v9.
+let leakK = 0, voiceS = 0; const LKP = newPose(), lkT = { x: 0, y: 0, r: 0, set: false };
 function frame(time) {
+  { const lm = window.NH_LEAKMODE, vo = window.NH_VOICE;
+    leakK += ((lm && lm.on ? 1 : 0) - leakK) * (reduced ? 1 : .05);
+    const vl = vo ? vo.level : 0; voiceS += (vl - voiceS) * (vl > voiceS ? .45 : .12); }   // quick to rise, slow to fall, like a breath
   ptr.x += (ptr.tx - ptr.x) * (reduced ? 1 : .07); ptr.y += (ptr.ty - ptr.y) * (reduced ? 1 : .07);
   const kp = reduced ? 1 : .08;
   slotPtr.x += (slotPtr.tx - slotPtr.x) * kp; slotPtr.y += (slotPtr.ty - slotPtr.y) * kp; slotPtr.on += (slotPtr.ton - slotPtr.on) * kp;
@@ -693,8 +710,11 @@ function frame(time) {
   cam.position.set(ptr.x * .5 * lean, -ptr.y * .35 * lean, camZ * narrow * zoomK); cam.lookAt(0, 0, 0); cam.updateMatrixWorld();
   { // the hover glitch lives only on the opening sphere; it fades as the sphere settles and is gone once the hero moves on
     const sp = Math.min(1, Math.hypot(ptr.px - glitchP.x, ptr.py - glitchP.y) / ih * 6); glitchP.x = ptr.px; glitchP.y = ptr.py;
-    glitchP.v += (sp - glitchP.v) * .2; glitchP.on += ((ptr.px > -1e3 ? 1 : 0) - glitchP.on) * .12;
-    GU.uGlitch.value = reduced ? 0 : seg(heroOpen, .12, .55) * glitchP.on * (.55 + .45 * glitchP.v);
+    glitchP.v += (sp - glitchP.v) * .06; glitchP.on += ((ptr.px > -1e3 ? 1 : 0) - glitchP.on) * .05;
+    // owner (2026-10-18, second pass): subtler and more fluid; it now swells with the pointer's speed and settles slowly
+    GU.uGlitch.value = reduced ? 0 : seg(heroOpen, .12, .55) * glitchP.on * (.2 + .8 * glitchP.v) * .55;
+    GU.uFlow.value = reduced ? 0 : leakK * .2;
+    GU.uVoice.value = leakK * voiceS * (reduced ? .4 : 1);
     GU.uPtr.value.set(ptr.px / innerWidth, 1 - ptr.py / ih);
   }
   // the ball becoming the About lens: on phones it follows the scroll with a little inertia, so it eases in whatever the scroll distance
@@ -746,6 +766,21 @@ function frame(time) {
       }
     }
   }
+  // v10: Measure the leak. While the layer is open the object goes back to the opening sphere, in the middle, and breathes with the voice
+  if (leakK > .001) {
+    // where it sits and how big: landing-nh10.js aims it (NH_LEAKMODE.x, .y, .r in px) at the number, or between question and chips
+    const lm = window.NH_LEAKMODE || {}, tx = lm.x ?? innerWidth / 2, ty = lm.y ?? ih / 2, tr = lm.r ?? Math.min(innerWidth, ih) * .2;
+    if (!lkT.set) { lkT.x = tx; lkT.y = ty; lkT.r = tr; lkT.set = true; }
+    const kk = reduced ? 1 : .07; lkT.x += (tx - lkT.x) * kk; lkT.y += (ty - lkT.y) * kk; lkT.r += (tr - lkT.r) * kk;
+    ballPose(LKP, lkT.x, lkT.y, lkT.r * (1 + (reduced ? 0 : Math.sin(time * .8) * .012 + voiceS * .08)), ppu());
+    LKP.lean = .45;
+    // a crossfade, not a morph: the letters fade out, then the orb fades in and grows a touch (mixing them stacks 27 glass balls)
+    if (!visible) { visible = true; OUT.fade = 0; }
+    if (leakK < .5) OUT.fade *= 1 - io(leakK * 2);
+    else { mixPose(OUT, LKP, LKP, 0); const e = io(leakK * 2 - 1); OUT.fade = e; OUT.S *= .86 + .14 * e; }
+    lockGoal *= 1 - leakK; wallGoal = lerp(wallGoal, .7, leakK);
+    if (leakK > .5) which = 'leak';
+  } else lkT.set = false;
   k1T = k1Next;
   setLayer();
   lockFlat += (lockGoal - lockFlat) * (reduced ? 1 : .12);

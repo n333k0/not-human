@@ -22,7 +22,7 @@ const wide = () => innerWidth >= 900;
 /* ---------------------------------------------------------------- smooth scroll */
 let lenis = null;
 if (!reduced && window.Lenis) {
-  lenis = new window.Lenis({ duration: 1.1, smoothWheel: true });
+  lenis = new window.Lenis({ duration: 1.1, smoothWheel: true }); window.NHLenis = lenis;   // v10: the leak layer stops and restarts it
   lenis.on('scroll', ScrollTrigger.update);
   gsap.ticker.add(t => lenis.raf(t * 1000));
   gsap.ticker.lagSmoothing(0);

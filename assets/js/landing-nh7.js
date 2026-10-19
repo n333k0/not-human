@@ -19,8 +19,12 @@ let lastO = performance.now();
 const tickOrb = now => {
   const dt = Math.min(.05, (now - lastO) / 1000); lastO = now;
   const idle = !ptr.on || now - ptr.t > 4000;
-  const tx = idle ? innerWidth * (.5 + Math.sin(now / 5200) * .3) : ptr.x, ty = idle ? innerHeight * (.48 + Math.sin(now / 3700) * .22) : ptr.y;
-  const k = reduced ? 1 : 1 - Math.pow(.02, dt);
+  // v10 (window.NH_ORB_DRIFT = share of the pointer, 0..1): the light wanders on its own, slowly, and only leans toward the pointer
+  const drift = +(window.NH_ORB_DRIFT || 0);
+  const wx = innerWidth * (.5 + Math.sin(now / 5200) * .3 + Math.sin(now / 2900) * .06), wy = innerHeight * (.48 + Math.sin(now / 3700) * .22 + Math.cos(now / 4300) * .05);
+  const tx = drift ? (idle ? wx : wx + (ptr.x - wx) * drift) : (idle ? innerWidth * (.5 + Math.sin(now / 5200) * .3) : ptr.x);
+  const ty = drift ? (idle ? wy : wy + (ptr.y - wy) * drift) : (idle ? innerHeight * (.48 + Math.sin(now / 3700) * .22) : ptr.y);
+  const k = reduced ? 1 : 1 - Math.pow(drift ? .25 : .02, dt);
   orb.x += (tx - orb.x) * k; orb.y += (ty - orb.y) * k;
   orb.v *= Math.pow(.25, dt);
   const target = idle ? .35 + .35 * Math.max(0, Math.sin(now / 2300)) : .55 + orb.v * .6;
