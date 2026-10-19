@@ -23,6 +23,20 @@
   const settle = (el) => new MutationObserver((ms, mo) => { if (!el.style.clipPath && !el.style.transform) { el.style.willChange = 'auto'; mo.disconnect(); } }).observe(el, { attributes: true, attributeFilter: ['style'] });
   document.querySelectorAll('.cs3, .pr-card, .cs-audit').forEach(settle);
 
+  // Match the case pages' one-time line reveal. Static content stays visible without JS.
+  if (!reduce && 'IntersectionObserver' in window) {
+    const artObserver = new IntersectionObserver((entries) => entries.forEach((entry) => {
+      if (entry.isIntersecting) {
+        entry.target.removeAttribute('data-armed');
+        artObserver.unobserve(entry.target);
+      }
+    }), { rootMargin: '0px 0px -8% 0px' });
+    document.querySelectorAll('.cs3 .sym').forEach((art) => {
+      art.setAttribute('data-armed', '');
+      artObserver.observe(art);
+    });
+  }
+
   // the windows (the audit report, each case): page through on their own, one page every few seconds, only while on screen
   document.querySelectorAll('.rep').forEach((rep, n) => {
     // the dots and the page title float under the window now (owner, 2026-10-18), so look for them around it, not inside
