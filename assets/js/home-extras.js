@@ -25,13 +25,18 @@
 
   // the windows (the audit report, each case): page through on their own, one page every few seconds, only while on screen
   document.querySelectorAll('.rep').forEach((rep, n) => {
-    const strip = rep.querySelector('.rep__strip'), imgs = [...strip.querySelectorAll('img')], dots = [...rep.querySelectorAll('.rep__pg i')], title = rep.querySelector('.rep__t');
+    // the dots and the page title float under the window now (owner, 2026-10-18), so look for them around it, not inside
+    const root = rep.closest('.cs-audit__side') || rep;
+    const strip = rep.querySelector('.rep__strip'), imgs = [...strip.querySelectorAll('img')], dots = [...root.querySelectorAll('.rep__pg i')], title = root.querySelector('.rep__t');
     strip.style.setProperty('--n', imgs.length);
     let i = 0, on = false, timer = 0;
     const go = (k) => { i = (k + imgs.length) % imgs.length; strip.style.setProperty('--i', i); dots.forEach((d, j) => d.classList.toggle('on', j === i)); if (title) title.textContent = imgs[i].alt; };
     const loop = () => { clearTimeout(timer); if (on && !reduce) timer = setTimeout(() => { go(i + 1); loop(); }, (i === 0 ? 3200 : 2600) + n * 350); };
     go(0);
     if ('IntersectionObserver' in window) new IntersectionObserver((es) => { on = es[0].isIntersecting; if (on) imgs.forEach((im) => { im.loading = 'eager'; }); loop(); }, { threshold: .25 }).observe(rep);
-    dots.forEach((d, j) => d.addEventListener('mouseenter', () => { go(j); loop(); }));
+    dots.forEach((d, j) => {
+      d.addEventListener('mouseenter', () => { go(j); loop(); });
+      d.addEventListener('click', (e) => { e.preventDefault(); e.stopPropagation(); go(j); loop(); });   // a dot changes the page; it does not open the report
+    });
   });
 })();
