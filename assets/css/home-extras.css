@@ -24,7 +24,7 @@ html.v10 .cs-audit__side { position: relative; display: grid; place-items: cente
   background: radial-gradient(circle, rgba(255, 255, 255, .2) 0 1.2px, transparent 1.6px) 0 0 / 22px 22px, rgba(9, 9, 11, .5); text-decoration: none; color: inherit; }
 html.v10 .cs-audit__side::after { content: ""; position: absolute; inset: 0; pointer-events: none; background: radial-gradient(70% 65% at 50% 50%, transparent, rgba(9, 9, 11, .5)); }
 html.v10 .cs-audit { outline: 1px solid rgba(255, 255, 255, .12); outline-offset: -1px; box-shadow: none; }
-html.v10 .cs-audit:hover { outline-color: rgba(190, 170, 255, .45); }
+html.v10 .cs-audit:hover { outline-color: rgba(255, 255, 255, .3); }   /* owner: no purple on hover */
 html.v10 .cs3 { outline: 1px solid rgba(255, 255, 255, .1); outline-offset: -1px; }
 
 /* the mock-up: a small window onto the report, floating, paging on its own */
