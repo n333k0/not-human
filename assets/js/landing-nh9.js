@@ -682,7 +682,7 @@ const orbFx = { x: .5, y: .5, s: 1 }, glitchP = { x: -1e4, y: -1e4, v: 0, on: 0 
 let leakK = 0, voiceS = 0; const LKP = newPose(), lkT = { x: 0, y: 0, r: 0, set: false };
 function frame(time) {
   { const lm = window.NH_LEAKMODE, vo = window.NH_VOICE;
-    leakK += ((lm && lm.on ? 1 : 0) - leakK) * (reduced ? 1 : .05);
+    leakK += ((lm && lm.on ? 1 : 0) - leakK) * (reduced ? 1 : .1);
     const vl = vo ? vo.level : 0; voiceS += (vl - voiceS) * (vl > voiceS ? .45 : .12); }   // quick to rise, slow to fall, like a breath
   ptr.x += (ptr.tx - ptr.x) * (reduced ? 1 : .07); ptr.y += (ptr.ty - ptr.y) * (reduced ? 1 : .07);
   const kp = reduced ? 1 : .08;
@@ -713,7 +713,7 @@ function frame(time) {
     glitchP.v += (sp - glitchP.v) * .06; glitchP.on += ((ptr.px > -1e3 ? 1 : 0) - glitchP.on) * .05;
     // owner (2026-10-18, second pass): subtler and more fluid; it now swells with the pointer's speed and settles slowly
     GU.uGlitch.value = reduced ? 0 : seg(heroOpen, .12, .55) * glitchP.on * (.2 + .8 * glitchP.v) * .55;
-    GU.uFlow.value = reduced ? 0 : leakK * .2;
+    GU.uFlow.value = 0;   // owner (2026-10-18, third pass): no smoky flow in the leak; the same sphere, only bigger
     GU.uVoice.value = leakK * voiceS * (reduced ? .4 : 1);
     GU.uPtr.value.set(ptr.px / innerWidth, 1 - ptr.py / ih);
   }
@@ -766,20 +766,21 @@ function frame(time) {
       }
     }
   }
-  // v10: Measure the leak. While the layer is open the object goes back to the opening sphere, in the middle, and breathes with the voice
+  // v10: Measure the leak (owner, 2026-10-18, third pass). The same sphere the home opens on grows, without disappearing, to fill
+  // the screen behind the questions (the size of the owner's drawing), and moves a little while the voice speaks. No second orb,
+  // no smoky flow: one ball, the same shader, so it costs what the opening already costs.
   if (leakK > .001) {
-    // where it sits and how big: landing-nh10.js aims it (NH_LEAKMODE.x, .y, .r in px) at the number, or between question and chips
-    // while she talks (NH_LEAKMODE.talk) it grows to about the screen's height, centred, the question and the number inside it
-    // (owner, 2026-10-18); when she stops it eases back to frame the number
-    const lm = window.NH_LEAKMODE || {}, big = Math.min(ih * .5, innerWidth * (innerWidth < 900 ? .62 : .48));
-    const tx = lm.talk ? innerWidth / 2 : lm.x ?? innerWidth / 2, ty = lm.talk ? ih / 2 : lm.y ?? ih / 2, tr = lm.talk ? big : lm.r ?? Math.min(innerWidth, ih) * .2;
-    if (!lkT.set) { lkT.x = tx; lkT.y = ty; lkT.r = tr; lkT.set = true; }
-    const kk = reduced ? 1 : tr > lkT.r ? .07 : .04; lkT.x += (tx - lkT.x) * kk; lkT.y += (ty - lkT.y) * kk; lkT.r += (tr - lkT.r) * kk;
-    ballPose(LKP, lkT.x, lkT.y, lkT.r * (1 + (reduced ? 0 : Math.sin(time * .8) * .012 + voiceS * .09)), ppu());   // and it swells with every word
+    const R = innerWidth < 900 ? Math.min(ih * .4, innerWidth * .64) : ih * .56;
+    const wob = reduced ? 0 : voiceS;
+    const tx = innerWidth / 2 + Math.sin(time * 1.3) * wob * 10, ty = ih / 2 + Math.cos(time * 1.1) * wob * 8;
+    if (!lkT.set) { lkT.x = tx; lkT.y = ty; lkT.r = R; lkT.set = true; }
+    lkT.x += (tx - lkT.x) * .2; lkT.y += (ty - lkT.y) * .2; lkT.r = R;
+    ballPose(LKP, lkT.x, lkT.y, lkT.r * (1 + (reduced ? 0 : Math.sin(time * .8) * .01 + wob * .06)), ppu());   // it swells a little with every word
     LKP.lean = .45;
-    // a crossfade, not a morph: the letters fade out, then the orb fades in and grows a touch (mixing them stacks 27 glass balls)
     if (!visible) { visible = true; OUT.fade = 0; }
-    if (leakK < .5) OUT.fade *= 1 - io(leakK * 2);
+    const fromSphere = which === 'hero' && heroOpen > .3;
+    if (fromSphere) mixPose(OUT, OUT, LKP, io(leakK));          // on the opening the sphere just grows
+    else if (leakK < .5) OUT.fade *= 1 - io(leakK * 2);          // anywhere else: the shape gives way to the sphere (mixing letters stacks 27 balls)
     else { mixPose(OUT, LKP, LKP, 0); const e = io(leakK * 2 - 1); OUT.fade = e; OUT.S *= .86 + .14 * e; }
     lockGoal *= 1 - leakK; wallGoal = lerp(wallGoal, .7, leakK);
     if (leakK > .5) which = 'leak';
@@ -788,6 +789,9 @@ function frame(time) {
   setLayer();
   lockFlat += (lockGoal - lockFlat) * (reduced ? 1 : .12);
   if (!visible) { gl.clear(); hideTargets(); setOrb(o, null); if (bg) bg.r.render(bg.s, bg.c); return; }
+  // v10 opening (owner, 2026-10-18): the sphere is a little dimmer while the opening title is up, so the title reads; it comes back
+  // to full as the title leaves on scroll (NH_INTRO, from landing-nh10.js), and the leak layer always gets it at full
+  if (window.NH_INTRO > 0 && which === 'hero') OUT.fade *= 1 - .38 * window.NH_INTRO * (1 - leakK);
   apply(OUT);
   // the piece leans toward the pointer (never while a letter holds square-on); in the slot it tilts under it
   const lk = OUT.lean * lean;

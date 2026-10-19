@@ -13,7 +13,18 @@ const WEEKS = 46, SHARE = .7, AUDIT = '$3,000';
 const money = n => '$' + Math.round(n).toLocaleString('en-US');
 const num = n => Math.round(n).toLocaleString('en-US');
 
-const CHIPS = ['Reports', 'Data entry', 'Follow-ups', 'Invoicing', 'Scheduling', 'Support replies', 'Proposals', 'Onboarding'];
+/* step 4 (owner, 2026-10-18): a long list, grouped, so it gives ideas: what an owner or an operations lead is quietly stuck doing,
+   including the design work and the emails people don't think of handing off */
+const CHIP_GROUPS = [
+  ['Sales', ['Lead follow-up emails', 'Qualifying new leads', 'CRM updates', 'Proposals and quotes', 'Call notes into the CRM', 'Booking meetings', 'Chasing unsigned contracts']],
+  ['Marketing & design', ['Social media posts', 'Newsletters', 'Ad variations', 'Design requests and resizes', 'Pitch decks', 'Case studies and blog posts', 'Product photos and mock-ups']],
+  ['Customer support', ['Email and WhatsApp replies', 'Ticket triage', 'Answering the same questions', 'Order status questions', 'Replying to reviews', 'Refunds and returns']],
+  ['Finance', ['Invoicing', 'Payment reminders', 'Expense receipts', 'Bank reconciliation', 'Month-end reports', 'Payroll inputs']],
+  ['Operations', ['Copying data between tools', 'Spreadsheet clean-up', 'PDFs and forms', 'Purchase orders', 'Inventory checks', 'Vendor follow-ups', 'Scheduling and dispatch']],
+  ['People', ['Screening CVs', 'Interview scheduling', 'Onboarding new hires', 'Policy questions', 'Timesheets']],
+  ['Management & knowledge', ['Weekly status reports', 'Dashboards', 'Meeting notes and action items', 'SOPs and documentation', '“Where is that file?”', 'Approvals and sign-offs', 'Research and competitor tracking']],
+];
+const CHIPS = CHIP_GROUPS.flatMap(g => g[1]);
 const STEPS = [
   { k: 'people', q: 'How many people are on your team?', hint: 'Everyone who touches the work, you included.',
     unit: v => (v === 1 ? 'person' : 'people'), min: 1, max: 200, top: 5000, step: 1, def: 10 },
@@ -21,7 +32,7 @@ const STEPS = [
     unit: () => 'hours a week, each', min: 0, max: 30, top: 60, step: 1, def: 8 },
   { k: 'rate', q: 'What does an hour of their time cost you?', hint: 'Salary plus overhead, in US dollars. A rough number is fine.',
     pre: '$', unit: () => 'per hour', min: 15, max: 200, top: 1000, step: 5, def: 40 },
-  { k: 'handoff', q: 'What would you hand off, if you could?', hint: 'Even the things you think can\u2019t be automated. Pick any, or skip.', chips: CHIPS }
+  { k: 'handoff', q: 'What would you hand off, if you could?', hint: 'Pick everything that eats your team\u2019s week, even the things you think can\u2019t be automated. Or skip.', chips: CHIPS }
 ];
 /* what the voice says; keep in step with assets/voice/lines.json (tools/build-voice.py reads that file) */
 const LINES = [
@@ -114,14 +125,19 @@ const leak = ob && (() => {
   let step = 0, opener = null, open = false, fresh = true;   // fresh: the first digit typed replaces the shown number
 
   /* chips, built once */
-  CHIPS.forEach(c => {
-    const b = document.createElement('button'); b.type = 'button'; b.textContent = c; b.setAttribute('aria-pressed', 'false');
-    b.addEventListener('click', () => { picked.has(c) ? picked.delete(c) : picked.add(c); b.setAttribute('aria-pressed', String(picked.has(c))); });
-    chips.append(b);
+  CHIP_GROUPS.forEach(([name, items]) => {
+    const g = document.createElement('div'); g.className = 'ob-grp'; g.setAttribute('role', 'group'); g.setAttribute('aria-label', name);
+    const t = document.createElement('span'); t.className = 'ob-grp-t'; t.textContent = name; g.append(t);
+    items.forEach(c => {
+      const b = document.createElement('button'); b.type = 'button'; b.textContent = c; b.setAttribute('aria-pressed', 'false');
+      b.addEventListener('click', () => { picked.has(c) ? picked.delete(c) : picked.add(c); b.setAttribute('aria-pressed', String(picked.has(c))); });
+      g.append(b);
+    });
+    chips.append(g);
   });
   const otherIn = document.createElement('input'); otherIn.placeholder = 'Something else\u2026'; otherIn.setAttribute('aria-label', 'Something else');
   otherIn.addEventListener('input', () => { other = otherIn.value.trim(); });
-  chips.append(otherIn);
+  const og = document.createElement('div'); og.className = 'ob-grp'; og.append(otherIn); chips.append(og);
 
   const fitBig = () => { big.style.width = Math.max(1, big.value.length) * .62 + .08 + 'em'; };
   function setVal(v, from) {
@@ -272,7 +288,7 @@ const leak = ob && (() => {
   const upd = () => {
     raf = 0;
     const k = Math.min(1, Math.max(0, scrollY / (innerHeight * .16)));      // gone by about a sixth of a screen, before Not / Human
-    intro.style.setProperty('--io', String(1 - k));
+    intro.style.setProperty('--io', String(1 - k)); window.NH_INTRO = 1 - k;   // landing-nh9.js dims the sphere while the title is up
     intro.style.setProperty('--iy', (reduced ? 0 : k * 48).toFixed(1) + 'px');
     intro.style.visibility = k >= 1 ? 'hidden' : '';
   };

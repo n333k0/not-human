@@ -145,7 +145,17 @@ html.ob-open.v8 .gl8 { z-index: 31; }
 /* step 4: what they would hand off, as chips */
 .ob-chips { display: flex; flex-wrap: wrap; justify-content: center; gap: 8px; max-width: 720px; margin-top: clamp(20px, 4vh, 40px); }
 .ob-chips[hidden] { display: none; }
-.ob-ask.is-chips .ob-chips { margin-top: clamp(150px, 28vh, 290px); }   /* room for the orb between the question and the chips */
+.ob-ask.is-chips .ob-chips { margin-top: clamp(18px, 3vh, 30px); }
+/* the long list (owner, 2026-10-18): one row per area, a mono label first, smaller chips so it all fits */
+.ob-ask.is-chips .ob-chips { flex-direction: column; align-items: center; gap: 10px; max-width: 1060px; }
+.ob-grp { display: flex; flex-wrap: wrap; justify-content: center; align-items: center; gap: 6px; }
+.ob-grp-t { margin-right: 6px; font: 400 10.5px/1 var(--mono); letter-spacing: .1em; text-transform: uppercase; color: rgba(243, 242, 247, .55); }
+.ob-ask.is-chips .ob-chips button, .ob-ask.is-chips .ob-chips input { padding: 9px 14px; font-size: 13.5px; }
+.ob-ask.is-chips .ob-chips input { width: 280px; }
+@media (max-width: 899px) {
+  .ob-grp-t { width: 100%; margin: 8px 0 2px; text-align: center; }
+  .ob-ask.is-chips .ob-chips button { padding: 8px 12px; font-size: 13px; }
+}
 .ob-chips button, .ob-chips input { padding: 12px 18px; border-radius: 999px; border: 0; background: rgba(12, 12, 16, .45); color: #F3F2F7; cursor: pointer;
   box-shadow: inset 0 0 0 1px rgba(255, 255, 255, .3); font: 400 15px/1 var(--body); transition: background .35s ease, color .35s ease; }
 .ob-chips button:hover { box-shadow: inset 0 0 0 1px rgba(255, 255, 255, .7); }
@@ -227,3 +237,10 @@ html.v10 .bk-row .ts-out { padding: 15px 20px; }
   html.v10 .bk-days span { font-size: 20px; }
   html.v10 .bk-slots { grid-template-columns: repeat(2, minmax(0, 1fr)); }
 }
+
+/* The opening, second pass (owner, 2026-10-18): no description; the title on two lines, as wide as the screen allows. */
+html.v10 .intro { width: min(1500px, calc(100% - 32px)); }
+html.v10 .intro-t { max-width: none; font-size: clamp(38px, 4.7vw, 88px); line-height: .98; letter-spacing: -.05em; }
+html.v10 .intro { top: 46%; }   /* owner (2026-10-18, fourth pass): the title smaller and a little higher */
+html.v10 .intro-t .ln { display: block; white-space: nowrap; }
+@media (max-width: 899px) { html.v10 .intro-t { font-size: clamp(36px, 10.4vw, 60px); } html.v10 .intro-t .ln { white-space: normal; } }
