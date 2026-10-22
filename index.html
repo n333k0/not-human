@@ -6,32 +6,25 @@
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <title>Not Human</title>
 <meta name="description" content="Not Human builds agent systems that run whole workflows inside the software your company already uses. A RemotoLabs company.">
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=DM+Mono&family=Hanken+Grotesk:wght@100;200;300;400&family=Instrument+Sans:wght@400;700&display=swap">
-<link rel="stylesheet" href="assets/css/landing-nh3.css?v=0becc03">
-<link rel="stylesheet" href="assets/css/landing-nh4.css?v=0becc03">
-<link rel="stylesheet" href="assets/css/landing-nh5.css?v=0becc03">
-<link rel="stylesheet" href="assets/css/landing-nh6.css?v=0becc03">
-<link rel="stylesheet" href="assets/css/landing-nh7.css?v=0becc03">
-<link rel="stylesheet" href="assets/css/landing-nh8.css?v=0becc03">
-<link rel="stylesheet" href="assets/css/landing-nh9.css?v=0becc03">
-<link rel="stylesheet" href="assets/css/landing-nh10.css?v=0becc03">
-<link rel="stylesheet" href="assets/css/cases-home.css?v=0becc03">
-<link rel="stylesheet" href="assets/css/home-extras.css?v=632fdd7">
+<link rel="preload" href="assets/fonts-web/hanken-grotesk-latin.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="preload" href="assets/fonts-web/instrument-sans-latin.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="stylesheet" href="assets/fonts-web/fonts.css?v=f4e08af">
+<link rel="stylesheet" href="assets/css/site.css?v=f4e08af">
 <script>document.documentElement.classList.add('js'); if (/[?&]panel\b/.test(location.search)) document.documentElement.classList.add('show-panel');</script>
-<script type="importmap">{ "imports": { "three": "https://cdn.jsdelivr.net/npm/three@0.169.0/build/three.module.js", "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.169.0/examples/jsm/" } }</script>
+<script type="importmap">{ "imports": { "three": "./assets/vendor/three/build/three.module.js", "three/addons/": "./assets/vendor/three/examples/jsm/" } }</script>
+<link rel="modulepreload" href="assets/vendor/three/build/three.module.js">
+<link rel="modulepreload" href="assets/vendor/three/examples/jsm/geometries/RoundedBoxGeometry.js">
+<link rel="modulepreload" href="assets/js/landing-nh3.js?v=f4e08af">
+<link rel="modulepreload" href="assets/js/landing-nh9.js?v=f4e08af">
+<link rel="modulepreload" href="assets/js/landing-nh7.js?v=f4e08af">
+<link rel="modulepreload" href="assets/js/landing-nh10.js?v=f4e08af">
 </head>
 <body>
-
-
 <canvas class="bg8" aria-hidden="true"></canvas>
 <div class="grain" aria-hidden="true"></div>
 <div class="veil" aria-hidden="true"><canvas class="veil-mark"></canvas></div>
 <canvas class="gl8" aria-hidden="true"></canvas>
 <div class="targets" aria-hidden="true"><i></i><i></i><i></i><i class="x"></i><i></i><i class="x"></i><i></i><i class="x"></i></div>
-
-
 <header class="site-header" data-theme="dark">
   <div class="nbar">
     <a class="brand" href="#top" aria-label="Not Human, back to the top"><canvas class="mini" aria-hidden="true"></canvas><span class="brand-word">Not Human</span></a>
@@ -44,13 +37,9 @@
     </nav>
   </div>
 </header>
-
 <main id="top">
-
-
 <section class="hero" data-theme="dark" aria-label="Not Human">
   <div class="hero-pin">
-    
     <div class="intro">
       <h1 class="intro-t"><span class="ln">We design and build</span> <span class="ln">AI systems for your business.</span></h1>
       <p class="intro-d">We turn your workflows, knowledge, and operations into intelligent systems. From AI agents and automation to fully integrated infrastructure, we architect, deploy, and maintain solutions built around how your business actually works.</p>
@@ -76,8 +65,6 @@
     <div class="scroll-cue" aria-hidden="true"><i></i></div>
   </div>
 </section>
-
-
 <section class="cream about" data-theme="dark" id="about" aria-labelledby="about-h">
   <div class="glow" aria-hidden="true"></div>
   <div class="about-pin"><div class="wrap">
@@ -85,8 +72,6 @@
     <p class="about-sig label">Not × Human</p>
   </div></div>
 </section>
-
-
 <section class="cream how" data-theme="dark" id="how" aria-labelledby="how-h">
   <div class="how-pin">
     <div class="wrap"><div class="rule-row first"><h2 id="how-h" class="mark-x">How it works</h2><span class="label">From the audit to agents in production</span></div></div>
@@ -122,8 +107,6 @@
     </div>
   </div>
 </section>
-
-
 <section class="cream gains" data-theme="dark" aria-labelledby="gains-h">
   <div class="wrap">
     <div class="rule-row first rv"><h2 id="gains-h" class="mark-x">What changes</h2><span class="label">Lower cost · faster work · room to grow</span></div>
@@ -134,8 +117,6 @@
     </div>
   </div>
 </section>
-
-
 <section class="cream work" data-theme="dark" id="work" aria-labelledby="work-h">
   <div class="wrap">
     <div class="rule-row"><h2 id="work-h" class="mark-x">Where agents work</h2><span class="label">Six departments · the audit picks the first</span></div>
@@ -150,8 +131,6 @@
     </div>
   </div>
 </section>
-
-
 <section class="cream integ integ9" data-theme="dark" aria-labelledby="integ-h">
   <div class="wrap">
     <div class="rule-row first rv integ9-head"><h2 id="integ-h" class="mark-x">Fully integrated</h2><p class="mid integ9-lede">Agents work across your CRM, books, inbox and chat, connecting them into one operating layer, so results land where people already look. We never force a migration; if you want to switch a tool anyway, we help with the move.</p></div>
@@ -183,8 +162,6 @@
     </ol>
   </div>
 </section>
-
-
 <section class="cream systems" data-theme="dark" aria-labelledby="sys-h">
   <div class="wrap">
     <div class="rule-row first rv"><h2 id="sys-h" class="mark-x">Agent systems</h2><span class="label">Built after we map how your team does the work</span></div>
@@ -198,8 +175,6 @@
     </div>
   </div>
 </section>
-
-
 <section class="cream cases3" id="proof" data-theme="dark" aria-labelledby="cases-h">
   <div class="wrap">
     <div class="rule-row first rv"><h2 id="cases-h" class="mark-x">Case studies</h2><span class="label">The audit, then three systems · read the case or open the demo</span></div>
@@ -227,8 +202,6 @@
     <p class="cs-note label"><a href="cases/index.html">All case studies and demos →</a> · Illustrative engagements: composite companies, numbers modelled with the math shown.</p>
   </div>
 </section>
-
-
 <section class="cream notes3" id="notes" data-theme="dark" aria-labelledby="notes-h">
   <div class="wrap">
     <div class="rule-row first rv"><h2 id="notes-h" class="mark-x">Field notes</h2><span class="label">What we learn building agents · every source cited</span></div>
@@ -239,8 +212,6 @@
     </div>
   </div>
 </section>
-
-
 <section class="cream pricing" id="pricing" data-theme="dark" aria-labelledby="pricing-h">
   <div class="wrap">
     <div class="rule-row first rv"><h2 id="pricing-h" class="mark-x">Pricing</h2><span class="label">Three steps · each one earns the next</span></div>
@@ -270,8 +241,6 @@
     <p class="label pr-note">Prices in USD · no per-seat fees · what doesn’t pay is switched off</p>
   </div>
 </section>
-
-
 <section class="cream faq-sec" data-theme="dark" aria-labelledby="faq-h">
   <div class="wrap">
     <div class="rule-row"><h2 id="faq-h" class="mark-x">Questions</h2><span class="label">What companies ask first</span></div>
@@ -287,8 +256,6 @@
     </div>
   </div>
 </section>
-
-
 <span id="book" class="anchor" aria-hidden="true"></span>
 <section class="call call4" id="call" data-theme="dark" aria-labelledby="call-h">
   <div class="call-pin">
@@ -332,10 +299,7 @@
     </footer>
   </div>
 </section>
-
 </main>
-
-
 <div class="ob-back" aria-hidden="true" hidden></div>   
 <div class="ob" id="leak" role="dialog" aria-modal="true" aria-labelledby="ob-q" hidden>
   <div class="ob-bar">
@@ -374,22 +338,21 @@
     <div class="ob-nav"><button class="ts-out ob-prev" type="button">Back</button><button class="cta ob-next" type="button">Continue <svg class="ar" viewBox="0 0 12 12" aria-hidden="true"><path d="M3 9 9 3M4.2 3H9v4.8" fill="none" stroke="currentColor" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round"/></svg></button></div>
   </div>
 </div>
-
-<script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/ScrollTrigger.min.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/lenis@1.1.13/dist/lenis.min.js"></script>
+<script src="assets/vendor/gsap/gsap.min.js"></script>
+<script src="assets/vendor/gsap/ScrollTrigger.min.js"></script>
+<script src="assets/vendor/lenis/lenis.min.js"></script>
 <script>window.NH_TAIL = .07; window.NH_READ = .67;</script>
 <script>window.NH_OPEN = .07;</script>
 <script>window.NH_WALL = .14; window.NH_WALL_GLOW = 1;</script>
 <script>window.NH_MATERIAL = 'dark'; window.NH_OWN3D = true;</script>
 <script>window.NH_MARK_CENTRE = true;</script>
-<script src="assets/js/nh-mark.js?v=0becc03"></script>
-<script type="module" src="assets/js/landing-nh3.js?v=632fdd7"></script>
-<script type="module" src="assets/js/landing-nh9.js?v=0becc03"></script>
-<script type="module" src="assets/js/landing-nh7.js?v=0becc03"></script>
+<script src="assets/js/nh-mark.js?v=f4e08af"></script>
+<script type="module" src="assets/js/landing-nh3.js?v=f4e08af"></script>
+<script type="module" src="assets/js/landing-nh9.js?v=f4e08af"></script>
+<script type="module" src="assets/js/landing-nh7.js?v=f4e08af"></script>
 <script>window.NH_BOOK = { calendly: '', email: 'hello@nothuman.tech', tz: 'America/Argentina/Buenos_Aires', hours: [10, 11, 12, 14, 15, 16] };</script>
-<script type="module" src="assets/js/landing-nh10.js?v=0becc03"></script>
+<script type="module" src="assets/js/landing-nh10.js?v=f4e08af"></script>
 <script>window.NH_ORB_DRIFT = .3;</script>
-<script defer src="assets/js/home-extras.js?v=0becc03"></script>
+<script defer src="assets/js/home-extras.js?v=f4e08af"></script>
 </body>
 </html>

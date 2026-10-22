@@ -5,7 +5,8 @@
 // The surface is matte and velvety with a fine grain, lit warm from the top left, as in the reference.
 // Everything reads without this file: the stages, cards and lists are plain HTML.
 import * as THREE from 'three';
-import { RoomEnvironment } from 'three/addons/environments/RoomEnvironment.js';
+// speed (2026-10-22): only pages that draw their own 3D here need the room; v8 on (NH_OWN3D) skip the request
+const { RoomEnvironment } = window.NH_OWN3D ? {} : await import('three/addons/environments/RoomEnvironment.js');
 
 const reduced = matchMedia('(prefers-reduced-motion: reduce)').matches;
 const fine = matchMedia('(hover: hover) and (pointer: fine)').matches;
@@ -18,6 +19,10 @@ const $$ = (s, r = document) => [...r.querySelectorAll(s)];
 const { gsap, ScrollTrigger } = window;
 gsap.registerPlugin(ScrollTrigger);
 const wide = () => innerWidth >= 900;
+// speed (2026-10-22): per-frame style writes go through these, so an unchanged value is never written again (each write
+// dirties the page's style, and a size read after it forces a layout)
+const setVar = (el, k, v) => { const c = el._nv || (el._nv = {}); if (c[k] !== v) { c[k] = v; el.style.setProperty(k, v); } };
+const setStyle = (el, k, v) => { if (el.style[k] !== v) el.style[k] = v; };
 
 /* ---------------------------------------------------------------- smooth scroll */
 let lenis = null;
@@ -598,8 +603,8 @@ function updateHero() {
   });
   // v6: Not / Human appear only once you scroll (the bar has shrunk) and leave as the mark unravels
   const fo = document.documentElement.classList.contains('v6') ? (window.NH_OPEN ? seg(heroT, window.NH_OPEN * .6, window.NH_OPEN + .015) : seg(heroT, .004, .03)) * (1 - seg(heroT, .12, .17)) : 1 - seg(heroT, .03, .1);
-  flanks.forEach(f => f.style.setProperty('--fo', fo.toFixed(3)));
-  hero.style.setProperty('--co', (1 - seg(heroT, .0, .03)).toFixed(3));
+  flanks.forEach(f => setVar(f, '--fo', fo.toFixed(3)));
+  setVar(hero, '--co', (1 - seg(heroT, .0, .03)).toFixed(3));
 }
 // which red section is on screen decides what the scene shows; over cream the hero canvas rests
 function sceneT() {
@@ -621,7 +626,7 @@ function renderHero(time) {
   if (!gl) return;
   const t = sceneT();
   if (which !== lastWhich) { canvas.style.setProperty('--gl-o', which === 'none' ? '0' : '1'); lastWhich = which; }
-  if (which === 'none') { targets.forEach(el => el.style.opacity = 0); return; }
+  if (which === 'none') { targets.forEach(el => setStyle(el, 'opacity', '0')); return; }
   const { camZ, flat, targetsOn } = gl.pose(t, intro);
   const sx = !wide() ? 0 : which === 'call' ? 1.2 : stageOn[0] || stageOn[2] ? 1.1 : stageOn[1] ? -1.1 : 0;
   shiftX += (sx - shiftX) * (reduced ? 1 : .05);
@@ -647,7 +652,7 @@ function renderHero(time) {
   }
   targets.forEach((el, i) => {
     const on = targetsOn;
-    el.style.opacity = on ? 1 : 0;
+    setStyle(el, 'opacity', on ? '1' : '0');
     if (!on) return;
     gl.nodes.getMatrixAt(gl.TARGET_NODES[i % gl.TARGET_NODES.length], mtx);
     proj.setFromMatrixPosition(mtx).applyMatrix4(gl.inner.matrixWorld).project(gl.camera);
@@ -767,13 +772,10 @@ let runX = 0;
 function sizeHow() { runX = wide() && !reduced ? Math.max(0, track.scrollWidth - innerWidth * .52) : 0; }
 ScrollTrigger.create({ trigger: howSec, start: 'top top', end: 'bottom bottom', onUpdate: s => { howT = s.progress; } });
 function updateCards() {
-  if (!wide() || reduced) { track.style.removeProperty('--tx'); cards.forEach(c => { c._ry = c._rz = 0; }); return; }
+  if (!wide() || reduced) { if (track._nv?.['--tx'] !== undefined) { track.style.removeProperty('--tx'); delete track._nv['--tx']; } cards.forEach(c => { c._ry = c._rz = 0; }); return; }
   // the track waits until the letter has opened, then moves
-  track.style.setProperty('--tx', (-seg(howT, .08, 1) * runX).toFixed(1) + 'px');
-  cards.forEach(c => {
-    const r = c.getBoundingClientRect(), x = (r.left + r.width / 2) / innerWidth;   // 0 left … 1 right
-    c._ry = c._rz = 0;                                                              // cards stay flat; only the pointer tilts them
-  });
+  setVar(track, '--tx', (-seg(howT, .08, 1) * runX).toFixed(1) + 'px');
+  cards.forEach(c => { c._ry = c._rz = 0; });   // cards stay flat; only the pointer tilts them (speed: no unused size read per card)
 }
 // under the pointer a card leans toward it and a soft light follows the pointer across it
 cards.forEach(c => {
@@ -790,9 +792,9 @@ cards.forEach(c => {
 function applyCards() {
   cards.forEach(c => {
     const inEl = c.querySelector('.card-in');
-    inEl.style.setProperty('--ry', (c._ry + c._mx).toFixed(2) + 'deg');
-    inEl.style.setProperty('--rx', c._my.toFixed(2) + 'deg');
-    inEl.style.setProperty('--rz', c._rz.toFixed(2) + 'deg');
+    setVar(inEl, '--ry', (c._ry + c._mx).toFixed(2) + 'deg');
+    setVar(inEl, '--rx', c._my.toFixed(2) + 'deg');
+    setVar(inEl, '--rz', c._rz.toFixed(2) + 'deg');
   });
 }
 

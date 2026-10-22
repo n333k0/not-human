@@ -28,6 +28,9 @@ const wide = () => innerWidth >= 900;
 const $$ = (s, r = document) => [...r.querySelectorAll(s)];
 const { gsap, ScrollTrigger } = window;
 const root = document.documentElement;
+// speed (2026-10-22): per-frame style writes skip a value that has not changed (as in landing-nh3.js)
+const setVar = (el, k, v) => { const c = el._nv || (el._nv = {}); if (c[k] !== v) { c[k] = v; el.style.setProperty(k, v); } };
+const setStyle = (el, k, v) => { if (el.style[k] !== v) el.style[k] = v; };
 
 /* ---------------------------------------------------------------- settings: looks, light rigs, layer, knobs */
 const LOOKS = {
@@ -388,9 +391,15 @@ function makeGlass() {
     pass(compMat, null);
   }
   function clear() { renderer.setRenderTarget(null); renderer.clear(); }
+  // speed (2026-10-22): the governor below can lower the sharpness on a device that cannot keep up (never on one that can)
+  function setQuality(dprCap, samples) {
+    renderer.setPixelRatio(Math.min(devicePixelRatio || 1, dprCap));
+    if (main.samples !== samples) { main.samples = samples; main.dispose(); }
+    size();
+  }
   size();
   const setForm = f => { nodes.geometry = f === 'cube' ? cubeGeo : nodeGeo; };
-  return { renderer, scene, camera, outer, inner, nodes, rods, CUTS, lines, lineGeo, lineMat, compMat, size, render, clear, setForm, MARKS, markGeo, markMat, mats: [nodes.material, rods.material] };
+  return { renderer, scene, camera, outer, inner, nodes, rods, CUTS, lines, lineGeo, lineMat, compMat, size, render, clear, setForm, setQuality, MARKS, markGeo, markMat, mats: [nodes.material, rods.material] };
 }
 
 /* ---------------------------------------------------------------- applying a pose */
@@ -555,9 +564,9 @@ function phoneStep() {
   return f;
 }
 function moveTrack(f) {
-  if (!track || innerWidth < 900 || reduced) { track?.style.removeProperty('--tx8'); return; }
+  if (!track || innerWidth < 900 || reduced) { if (track?._nv?.['--tx8'] !== undefined) { track.style.removeProperty('--tx8'); delete track._nv['--tx8']; } return; }
   const step = cards[1].offsetLeft - cards[0].offsetLeft;
-  track.style.setProperty('--tx8', (-f * step).toFixed(1) + 'px');
+  setVar(track, '--tx8', (-f * step).toFixed(1) + 'px');
 }
 
 /* ---------------------------------------------------------------- after the last card: the cube opens big, then locks as the square */
@@ -814,7 +823,7 @@ function frame(time) {
     targets.forEach((el, i) => {
       gl.nodes.getMatrixAt(TARGET_NODES[i % TARGET_NODES.length], m);
       v.setFromMatrixPosition(m).applyMatrix4(gl.inner.matrixWorld).project(cam);
-      el.style.opacity = 1;
+      setStyle(el, 'opacity', '1');
       el.style.transform = `translate3d(${((v.x + 1) / 2 * innerWidth).toFixed(1)}px, ${((1 - v.y) / 2 * ih).toFixed(1)}px, 0)`;
     });
     lastTargets = true;
@@ -824,7 +833,31 @@ function hideTargets() { if (lastTargets !== false) { targets.forEach(el => { el
 
 function resize() { if (bg) bg.r.setSize(innerWidth, innerHeight, false); if (gl) gl.size(); }
 resize(); addEventListener('resize', resize);
-gsap.ticker.add(time => frame(time));
+
+/* ---------------------------------------------------------------- quality governor (speed, 2026-10-22; owner: yes)
+   Only for a device that cannot keep up: when the median frame stays over 34 ms (under 30 fps) for three seconds, the
+   glass steps down one level (sharpness 1.5 -> 1.25 -> 1 device pixel, then 2x instead of 4x multisampling), and steps
+   back up after six seconds of easy frames, twice at most so it cannot see-saw. A device at 60 fps never leaves level 0,
+   which is the page exactly as designed. ?q=high pins level 0; window.NH_QUALITY says where it is. */
+const QL = [[1.5, 4], [1.25, 4], [1, 4], [1, 2]];
+const Q = { level: 0, pinned: /[?&]q=high\b/.test(location.search), ups: 0, easy: 0, dts: [], last: 0, since: performance.now() + 3000 };
+const qSay = () => { const [cap, samples] = QL[Q.level]; window.NH_QUALITY = { level: Q.level, dpr: Math.min(devicePixelRatio || 1, cap), samples }; };
+const qSet = l => { const d = devicePixelRatio || 1; let k = l;   // skip levels that change nothing on this screen
+  while (k > 0 && k < QL.length - 1 && Math.min(d, QL[k][0]) === Math.min(d, QL[k - 1][0]) && QL[k][1] === QL[k - 1][1]) k += l > Q.level ? 1 : -1;
+  Q.level = Math.max(0, Math.min(QL.length - 1, k)); gl.setQuality(...QL[Q.level]); qSay(); };
+function govern() {
+  const now = performance.now(), dt = now - Q.last; Q.last = now;
+  if (Q.pinned || !gl || document.hidden || now < Q.since || dt > 250) return;
+  Q.dts.push(dt);
+  if (now - Q.since < 3000) return;
+  const m = Q.dts.sort((a, b) => a - b)[Q.dts.length >> 1]; Q.dts = []; Q.since = now;
+  if (m > 34 && Q.level < QL.length - 1) { Q.easy = 0; qSet(Q.level + 1); }
+  else if (m < 18 && Q.level > 0 && Q.ups < 2) { if (++Q.easy >= 2) { Q.easy = 0; Q.ups++; qSet(Q.level - 1); } }
+  else Q.easy = 0;
+}
+if (gl) qSay();
+addEventListener('visibilitychange', () => { Q.last = performance.now(); Q.dts = []; Q.since = Q.last + 1000; });
+gsap.ticker.add(time => { frame(time); govern(); });
 
 /* ---------------------------------------------------------------- agent systems cards: the How cards' hover */
 // under the pointer a card turns a little toward it (a third of v3's tilt, as the How cards in v9) and a pane of light follows

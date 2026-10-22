@@ -8,11 +8,16 @@ const root = document.documentElement;
 // its own and fades in and out, as the light in the reference passes behind the glass now and then
 const ptr = { x: innerWidth / 2, y: innerHeight / 2, on: false, t: 0 };
 const orb = { x: innerWidth / 2, y: innerHeight * .45, i: 0, v: 0 };
+// speed (2026-10-22): the orb's variables go only to the elements that read them (.leak and .orb, in v7), never to :root,
+// and only when they change: a custom property on :root restyles the whole page every frame. v8 on have neither element,
+// so they write nothing; the 3D reads window.NHOrb.
+const lit = [...document.querySelectorAll('.leak, .orb')], said = new Map();
+const put = (k, v) => { if (said.get(k) === v) return; said.set(k, v); for (const el of lit) el.style.setProperty(k, v); };
 addEventListener('pointermove', e => {
   orb.v = Math.min(1, orb.v + Math.hypot(e.clientX - ptr.x, e.clientY - ptr.y) / 260);
   ptr.x = e.clientX; ptr.y = e.clientY; ptr.on = true; ptr.t = performance.now();
-  root.style.setProperty('--mx', (e.clientX / innerWidth * 2 - 1).toFixed(3));
-  root.style.setProperty('--my', (e.clientY / innerHeight * 2 - 1).toFixed(3));
+  put('--mx', (e.clientX / innerWidth * 2 - 1).toFixed(3));
+  put('--my', (e.clientY / innerHeight * 2 - 1).toFixed(3));
 }, { passive: true });
 document.addEventListener('pointerleave', () => { ptr.on = false; });
 let lastO = performance.now();
@@ -29,8 +34,7 @@ const tickOrb = now => {
   orb.v *= Math.pow(.25, dt);
   const target = idle ? .35 + .35 * Math.max(0, Math.sin(now / 2300)) : .55 + orb.v * .6;
   orb.i += (target - orb.i) * (1 - Math.pow(.1, dt));
-  root.style.setProperty('--ox', orb.x.toFixed(1) + 'px'); root.style.setProperty('--oy', orb.y.toFixed(1) + 'px');
-  root.style.setProperty('--orb-i', orb.i.toFixed(3));
+  if (lit.length) { put('--ox', orb.x.toFixed(1) + 'px'); put('--oy', orb.y.toFixed(1) + 'px'); put('--orb-i', orb.i.toFixed(3)); }
   window.NHOrb = { x: orb.x / innerWidth, y: orb.y / innerHeight, i: orb.i };
   requestAnimationFrame(tickOrb);
 };
